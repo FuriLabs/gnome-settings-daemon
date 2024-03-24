@@ -1,3 +1,9 @@
+gnome-settings-daemon (46~beta-2ubuntu5) noble; urgency=high
+
+  * No change rebuild against libcanberra-gtk3-0t64, libcanberra0t64.
+
+ -- Julian Andres Klode <juliank@ubuntu.com>  Sun, 24 Mar 2024 16:22:06 +0100
+
 gnome-settings-daemon (46~beta-2ubuntu4) noble; urgency=medium
 
   * No-change rebuild against libcups2t64.
