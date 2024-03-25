@@ -1,3 +1,9 @@
+gnome-settings-daemon (46~beta-2ubuntu6) noble; urgency=medium
+
+  * No-change rebuild for mutter ABI changes on armhf.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 25 Mar 2024 19:27:20 +0100
+
 gnome-settings-daemon (46~beta-2ubuntu5) noble; urgency=high
 
   * No change rebuild against libcanberra-gtk3-0t64, libcanberra0t64.
