@@ -1,3 +1,21 @@
+gnome-settings-daemon (46.0-1ubuntu1) noble; urgency=medium
+
+  * Merge with Debian (LP: #2062169). Remaining changes:
+    + debian/control:
+      - Build-depend on accountsservice
+    + debian/patches/ubuntu:
+      - keyboard-sync-input-sources-to-accountsservice.patch
+      - keyboard-Use-ibus-sources-from-locale.patch
+      - lid-close-suspend-support.patch
+      - media-keys-correct-logout-action.patch
+      - media-keys-restore-terminal-keyboard-shortcut-schema.patch
+      - print-notifications-suppress-printer-may-not-be-connected.patch
+      - teach-gsd-about-the-gnome-calculator-snap-.desktop-name.patch
+    + debian/gnome-settings-daemon.install:
+      - Install apport hook
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 18 Apr 2024 06:59:35 -0400
+
 gnome-settings-daemon (46.0-1) unstable; urgency=medium
 
   [ Jeremy Bícha ]
