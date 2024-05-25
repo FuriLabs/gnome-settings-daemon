@@ -3031,7 +3031,6 @@ iio_proxy_changed (GsdPowerManager *manager)
         gdouble alpha;
         gint64 current_time;
         gint pc;
-        //gint current_brightness = 0;
 
         /* no display hardware */
         if (!manager->backlight)
@@ -3052,17 +3051,17 @@ iio_proxy_changed (GsdPowerManager *manager)
         g_debug ("Read last absolute light level: %f", manager->ambient_last_absolute);
 
         gboolean brightness_linear = g_settings_get_boolean (manager->settings_droidian_power, "auto-brightness-linear");
-        g_debug("gsd-power-manager::auto-brightness-linear boolean value: %b", brightness_linear);
+        g_debug ("gsd-power-manager::auto-brightness-linear boolean value: %b", brightness_linear);
 
         manager->ambient_norm_value = 1.0f;
-        g_debug("gsd-power-manager::set manager->ambient_norm_value to 1.0f");
+        g_debug ("gsd-power-manager::set manager->ambient_norm_value to 1.0f");
 
         /* set new value */
         if (!g_settings_get_boolean (manager->settings_droidian_power, "auto-brightness-linear")) {
                 /* the user has asked to renormalize */
                 if (manager->ambient_norm_required) {
                         g_debug ("Renormalizing light level from old light percentage: %.1f%%",
-                               manager->ambient_percentage_old);
+                                  manager->ambient_percentage_old);
                         manager->ambient_accumulator = manager->ambient_percentage_old;
                         ch_backlight_renormalize (manager);
                 }
@@ -3073,6 +3072,7 @@ iio_proxy_changed (GsdPowerManager *manager)
                         alpha = 1.0f / (1.0f + (GSD_AMBIENT_TIME_CONSTANT / (current_time - manager->ambient_last_time)));
                 else
                         alpha = 0.0f;
+
                 manager->ambient_last_time = current_time;
 
                 /* calculate exponential weighted moving average */
@@ -3087,8 +3087,8 @@ iio_proxy_changed (GsdPowerManager *manager)
                 if (manager->ambient_accumulator < 0.f)
                         goto out;
 
-                g_debug ("Setting brightness from ambient %.1f%%",
-                        pc = manager->ambient_accumulator);
+                pc = manager->ambient_accumulator;
+                g_debug ("Setting brightness from ambient %.1f%%", (double) pc);
 
                 if (manager->backlight)
                         gsd_backlight_set_brightness_async (manager->backlight, pc, NULL, NULL, NULL);
@@ -3105,7 +3105,7 @@ iio_proxy_changed (GsdPowerManager *manager)
 
                                 manager->ambient_raw_old = manager->ambient_last_absolute;
 
-                                current_time = g_get_monotonic_time();
+                                current_time = g_get_monotonic_time ();
 
                                 g_debug("gsd-power-manager::current time value: %" G_GINT64_FORMAT, current_time);
                                 g_debug("gsd-power-manager::manager->ambient_last_time value: %" G_GINT64_FORMAT, manager->ambient_last_time);
@@ -3115,11 +3115,11 @@ iio_proxy_changed (GsdPowerManager *manager)
                                 else
                                         alpha = 0.0f;
 
-                                g_debug("gsd-power-manager::alpha value: %f", alpha);
+                                g_debug ("gsd-power-manager::alpha value: %f", alpha);
                                 manager->ambient_last_time = current_time;
 
                                 manager->ambient_norm_value = 1.0f;
-                                g_debug("gsd-power-manager::manager->ambient_norm_value value: %f", manager->ambient_norm_value);
+                                g_debug ("gsd-power-manager::manager->ambient_norm_value value: %f", manager->ambient_norm_value);
 
                                 /* calculate exponential weighted moving average */
                                 manager->ambient_accumulator = (alpha * manager->ambient_last_absolute) +
@@ -3127,20 +3127,19 @@ iio_proxy_changed (GsdPowerManager *manager)
 
                                 manager->ambient_accumulator = MAX (manager->ambient_accumulator, 0.f);
 
-                                g_debug("gsd-power-manager::manager->ambient_accumulator value: %f", manager->ambient_accumulator);
+                                g_debug ("gsd-power-manager::manager->ambient_accumulator value: %f", manager->ambient_accumulator);
 
                                 /* no valid readings yet */
-                                if (manager->ambient_accumulator < 0.f){
+                                if (manager->ambient_accumulator < 0.f)
                                         goto out;
-                                }
+
+                                pc = manager->ambient_accumulator;
 
                                 /* set new value */
-                                g_debug ("Setting brightness from ambient %.1f%%",
-                                        pc = manager->ambient_accumulator);
-                                        
+                                g_debug ("Setting brightness from ambient %.1f%", (double) pc);
+
                                 check_ambient_cb (manager);
                                 manager->ambient_percentage_old = pc;
-
                         } else if (manager->ambient_timer_id != 0) {
                                 g_debug ("Brightness update timer already running, skipping update.");
 
@@ -3255,9 +3254,8 @@ check_ambient_cb (GsdPowerManager *manager)
                                                NULL);
                 if (mode == 3) {
                         g_debug ("Display DPM is off, skipping");
-                        return;
+                        return G_SOURCE_REMOVE;
                 }
-
 
                 if (manager->brightness_old < linear_brightness) {
                         g_debug ("Setting brightness smooth from: %i%% to %i%%", manager->brightness_old, linear_brightness);
