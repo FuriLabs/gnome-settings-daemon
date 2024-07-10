@@ -1,3 +1,36 @@
+gnome-settings-daemon (46.0-5) unstable; urgency=medium
+
+  * Further adjust Build-Depends to fix build tests for several Debian ports
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 10 Jul 2024 11:05:08 -0400
+
+gnome-settings-daemon (46.0-4) unstable; urgency=medium
+
+  * Fix Build-Depends for architectures missing some build test dependencies
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 09 Jul 2024 15:58:27 -0400
+
+gnome-settings-daemon (46.0-3) unstable; urgency=medium
+
+  * Don't require build test dependencies on architectures where they
+    aren't available
+  * Ignore build tests failures for mips64el & riscv64 since they
+    require working mutter. Similar skipping is done in mutter too.
+  * Drop references to freebsd
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 09 Jul 2024 10:39:36 -0400
+
+gnome-settings-daemon (46.0-2) unstable; urgency=medium
+
+  [ Philip Withnall ]
+  * Depend on umockdev for build tests
+
+  [ Jeremy Bícha ]
+  * Depend on gnome-session-bin for build tests
+  * Bump Standards Version to 4.7.0
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 08 Jul 2024 16:16:53 -0400
+
 gnome-settings-daemon (46.0-1ubuntu1) noble; urgency=medium
 
   * Merge with Debian (LP: #2062169). Remaining changes:
