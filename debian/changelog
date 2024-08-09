@@ -1,3 +1,9 @@
+gnome-settings-daemon (47~beta-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 09 Aug 2024 14:39:38 -0400
+
 gnome-settings-daemon (46.0-5ubuntu1) oracular; urgency=medium
 
   * Merge with Debian. Remaining changes:
