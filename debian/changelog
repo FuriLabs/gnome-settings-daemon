@@ -1,3 +1,9 @@
+gnome-settings-daemon (47~beta-1ubuntu2) oracular; urgency=medium
+
+  * Update keyboard patch to fix build with gcc-14
+
+ --  Alessandro Astone <alessandro.astone@canonical.com>  Mon, 19 Aug 2024 17:00:51 -0400
+
 gnome-settings-daemon (47~beta-1ubuntu1) oracular; urgency=medium
 
   * Merge with Debian. Remaining changes:
