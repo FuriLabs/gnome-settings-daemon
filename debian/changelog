@@ -1,3 +1,25 @@
+gnome-settings-daemon (47~rc-1) experimental; urgency=medium
+
+  [ Simon McVittie ]
+  * New upstream release
+  * d/control: Add Breaks for gnome-shell/mutter older than 47.
+    We now need the DisplayConfig and X11 D-Bus interfaces from mutter 47.
+  * d/control: Build-depend on a version of gnome-session that fixes
+    test suite assumptions
+  * d/rules: Ensure that /tmp/.X11-unix exists
+
+  [ Alessandro Astone ]
+  * d/control, d/rules: Adapt for tests running in mutter Wayland mode:
+    - build-depend on xwayland
+    - don't use xvfb but keep xauth for now
+
+  [ Jeremy Bícha ]
+  * Run the mutter tests on loong64 since loong64 passes mutter's own tests
+  * Upload to experimental until we are ready for the
+    gnome-shell/mutter 47 transition
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 11 Sep 2024 08:47:12 -0400
+
 gnome-settings-daemon (47~beta-1ubuntu2) oracular; urgency=medium
 
   * Update keyboard patch to fix build with gcc-14
