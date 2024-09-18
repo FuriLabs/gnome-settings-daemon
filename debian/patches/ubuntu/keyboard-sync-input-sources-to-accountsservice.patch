@@ -9,10 +9,10 @@ Subject: keyboard: sync input sources to accountsservice
  3 files changed, 88 insertions(+)
 
 diff --git a/meson.build b/meson.build
-index deecd3f..471628b 100644
+index f119bd9..f50de48 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -88,6 +88,7 @@ endif
+@@ -94,6 +94,7 @@ endif
  
  add_project_arguments(common_flags + compiler_flags, language: 'c')
  
@@ -21,7 +21,7 @@ index deecd3f..471628b 100644
  geocode_glib_dep = dependency('geocode-glib-2.0', version: '>= 3.26.3', required: false)
  if not geocode_glib_dep.found()
 diff --git a/plugins/xsettings/gsd-xsettings-manager.c b/plugins/xsettings/gsd-xsettings-manager.c
-index f8ec6eb..2b369b9 100644
+index 4bd8989..1fc35fc 100644
 --- a/plugins/xsettings/gsd-xsettings-manager.c
 +++ b/plugins/xsettings/gsd-xsettings-manager.c
 @@ -38,6 +38,8 @@
@@ -57,7 +57,7 @@ index f8ec6eb..2b369b9 100644
          GdkSeat           *user_seat;
  
          GsdXSettingsGtk   *gtk;
-@@ -1333,12 +1338,76 @@ migrate_settings (void)
+@@ -1292,12 +1297,76 @@ migrate_settings (void)
                                      mouse_entries, G_N_ELEMENTS (mouse_entries));
  }
  
@@ -134,7 +134,7 @@ index f8ec6eb..2b369b9 100644
          setting = g_settings_get_string (manager->interface_settings,
                                           GTK_IM_MODULE_KEY);
          if (setting && *setting)
-@@ -1348,6 +1417,18 @@ update_gtk_im_module (GsdXSettingsManager *manager)
+@@ -1307,6 +1376,18 @@ update_gtk_im_module (GsdXSettingsManager *manager)
  
          xsettings_manager_set_string (manager->manager, "Gtk/IMModule", module);
          g_free (setting);
@@ -153,7 +153,7 @@ index f8ec6eb..2b369b9 100644
  }
  
  static void
-@@ -1418,6 +1499,10 @@ gsd_xsettings_manager_start (GsdXSettingsManager *manager,
+@@ -1377,6 +1458,10 @@ gsd_xsettings_manager_start (GsdXSettingsManager *manager,
          g_signal_connect_swapped (manager->interface_settings,
                                    "changed::" GTK_IM_MODULE_KEY,
                                    G_CALLBACK (update_gtk_im_module), manager);
@@ -164,7 +164,7 @@ index f8ec6eb..2b369b9 100644
          update_gtk_im_module (manager);
  
          manager->monitors_changed_id =
-@@ -1624,6 +1709,7 @@ gsd_xsettings_manager_stop (GsdXSettingsManager *manager)
+@@ -1583,6 +1668,7 @@ gsd_xsettings_manager_stop (GsdXSettingsManager *manager)
                  manager->user_seat = NULL;
          }
  

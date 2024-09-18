@@ -10,7 +10,7 @@ Subject: print-notifications: suppress printer may not be connected
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/plugins/print-notifications/gsd-print-notifications-manager.c b/plugins/print-notifications/gsd-print-notifications-manager.c
-index 4e0b3ab..adccca8 100644
+index 7b69674..ffb1d51 100644
 --- a/plugins/print-notifications/gsd-print-notifications-manager.c
 +++ b/plugins/print-notifications/gsd-print-notifications-manager.c
 @@ -407,7 +407,7 @@ get_statuses_second (guint i,
