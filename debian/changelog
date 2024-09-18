@@ -1,3 +1,17 @@
+gnome-settings-daemon (47.1-1) experimental; urgency=medium
+
+  [ Jeremy Bícha ]
+  * New upstream release
+  * Disable tests that require working mutter & xwayland.
+    Debian only started running these tests in July and they
+    became much flakier after they were switched upstream to xwayland
+    for 47~rc. (Mitigates: #1081417, #1018437, #1081439, #1081440)
+
+  [ Simon McVittie ]
+  * Drop unused Lintian override for #1031037, fixed in Lintian 2.117.0
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 18 Sep 2024 07:35:54 -0400
+
 gnome-settings-daemon (47~rc-1ubuntu1) oracular; urgency=medium
 
   * Merge with Debian. Remaining changes:
