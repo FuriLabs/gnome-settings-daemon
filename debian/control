@@ -61,6 +61,7 @@ Standards-Version: 4.6.1
 Vcs-Git: https://salsa.debian.org/gnome-team/gnome-settings-daemon.git
 Vcs-Browser: https://salsa.debian.org/gnome-team/gnome-settings-daemon
 Rules-Requires-Root: no
+XS-FuriOS-Extra-Repos: deb http://furilabs-gtk4.repo.furios.io/trixie-upgrade-4-16-1/ trixie main
 
 Package: gnome-settings-daemon
 Architecture: any
