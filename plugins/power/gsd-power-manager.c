@@ -223,6 +223,9 @@ struct _GsdPowerManager
 
         /* Device Properties */
         gboolean                 show_sleep_warnings;
+
+        /* Screens */
+        GsdDisplayConfig        *display_config;
 };
 
 enum {
@@ -2932,7 +2935,12 @@ gsd_power_manager_start (GsdPowerManager *manager,
         manager->is_virtual_machine = gsd_power_is_hardware_a_vm ();
 
         /* Check whether we have a lid first */
-        manager->up_client = up_client_new ();
+        manager->up_client = up_client_new_full (manager->cancellable, error);
+        if (manager->up_client == NULL) {
+                g_debug ("No upower support, disabling plugin");
+                return FALSE;
+        }
+
         manager->lid_is_present = up_client_get_lid_is_present (manager->up_client);
         if (manager->lid_is_present)
                 manager->lid_is_closed = up_client_get_lid_is_closed (manager->up_client);
@@ -3001,10 +3009,10 @@ gsd_power_manager_start (GsdPowerManager *manager,
 
         /* set up the screens */
         if (manager->lid_is_present) {
-                GsdDisplayConfig *display_config =
+                manager->display_config =
                         gnome_settings_bus_get_display_config_proxy ();
 
-                g_signal_connect_swapped (display_config, "notify::has-external-monitor",
+                g_signal_connect_swapped (manager->display_config, "notify::has-external-monitor",
                                           G_CALLBACK (has_external_monitor_changed), manager);
                 watch_external_monitor ();
                 sync_lid_inhibitor (manager);
@@ -3112,12 +3120,21 @@ gsd_power_manager_stop (GsdPowerManager *manager)
 
         if (manager->up_client)
                 g_signal_handlers_disconnect_by_data (manager->up_client, manager);
+        if (manager->display_config)
+                g_signal_handlers_disconnect_by_data (manager->display_config, manager);
+        if (manager->power_profiles_proxy)
+                g_signal_handlers_disconnect_by_data (manager->power_profiles_proxy, manager);
+        if (manager->screensaver_proxy)
+                g_signal_handlers_disconnect_by_data (manager->screensaver_proxy, manager);
+        if (manager->upower_kbd_proxy)
+                g_signal_handlers_disconnect_by_data (manager->upower_kbd_proxy, manager);
 
         g_clear_object (&manager->session);
         g_clear_object (&manager->settings);
         g_clear_object (&manager->settings_screensaver);
         g_clear_object (&manager->settings_bus);
         g_clear_object (&manager->up_client);
+        g_clear_object (&manager->display_config);
 
         iio_proxy_claim_light (manager, FALSE);
         g_clear_object (&manager->iio_proxy);
