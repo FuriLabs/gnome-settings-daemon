@@ -1,3 +1,9 @@
+gnome-settings-daemon (47.2-1) UNRELEASED; urgency=medium
+
+  * New upstream release (LP: #2085060)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 21 Nov 2024 16:54:19 -0500
+
 gnome-settings-daemon (47.1-2) unstable; urgency=medium
 
   [ Simon McVittie ]
