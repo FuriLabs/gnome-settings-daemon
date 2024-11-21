@@ -1,0 +1,34 @@
+From: Michael Catanzaro <mcatanzaro@redhat.com>
+Date: Wed, 20 Nov 2024 13:01:26 -0600
+Subject: power: disconnect from display config when backlight is destroyed
+
+This should hopefully fix the memory corruption that is happening in
+issue #833. At least the current code is plainly unsafe.
+
+Fixes #833
+
+Origin: upstream, https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/commit/5b211800e8df4e8380ebeb2ea84961ee5cc1cbe1
+---
+ plugins/power/gsd-backlight.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/plugins/power/gsd-backlight.c b/plugins/power/gsd-backlight.c
+index 94ee86d..70d259a 100644
+--- a/plugins/power/gsd-backlight.c
++++ b/plugins/power/gsd-backlight.c
+@@ -871,10 +871,11 @@ gsd_backlight_initable_init (GInitable       *initable,
+                 return FALSE;
+         }
+ 
+-        g_signal_connect (display_config,
+-                          "notify::backlight",
+-                          G_CALLBACK (on_backlight_changed),
+-                          backlight);
++        g_signal_connect_object (display_config,
++                                 "notify::backlight",
++                                 G_CALLBACK (on_backlight_changed),
++                                 backlight,
++                                 0);
+ 
+         g_signal_connect_object (display_config,
+                                  "notify::g-name-owner",
