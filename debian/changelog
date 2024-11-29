@@ -1,3 +1,10 @@
+gnome-settings-daemon (47.2-0ubuntu1) UNRELEASED; urgency=medium
+
+  * New upstream release (LP: #2089929)
+    - Address memory corruption crashes (LP: #2085060)
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 29 Nov 2024 14:39:11 +0100
+
 gnome-settings-daemon (47.1-1ubuntu1) oracular; urgency=medium
 
   * Merge with Debian. Remaining changes:
