@@ -2893,6 +2893,7 @@ iio_proxy_changed (GsdPowerManager *manager)
 
          /* Apply brightness directly, hardware knows what to set */
         if (manager->linear_brightness_ambient_unit == GSD_POWER_LIGHT_LEVEL_UNIT_VENDOR) {
+                manager->saved_brightness = manager->linear_brightness_ambient_iio;
                 gsd_backlight_set_brightness_async (manager->backlight,
                                                     manager->linear_brightness_ambient_iio,
                                                     NULL, NULL, NULL);
@@ -3649,6 +3650,9 @@ handle_set_property_other (GsdPowerManager *manager,
                 g_variant_get (value, "i", &brightness_value);
                 if (manager->backlight) {
                         handle_user_brightness (manager, brightness_value);
+
+                        manager->saved_brightness = brightness_value;
+
                         gsd_backlight_set_brightness_async (manager->backlight, brightness_value,
                                                             NULL, NULL, NULL);
                         return TRUE;
