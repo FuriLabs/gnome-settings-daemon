@@ -1,4 +1,4 @@
-gnome-settings-daemon (47.2-1ubuntu1) UNRELEASED; urgency=medium
+gnome-settings-daemon (47.2-1ubuntu1) plucky; urgency=medium
 
   * Merge with Debian. Remaining changes:
     + debian/control:
@@ -16,7 +16,7 @@ gnome-settings-daemon (47.2-1ubuntu1) UNRELEASED; urgency=medium
   * d/p/power-disconnect-from-display-config-when-backlight-is-de.patch:
     - Drop patch applied upstream
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 28 Nov 2024 15:47:38 +0100
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 06 Dec 2024 10:18:52 +0100
 
 gnome-settings-daemon (47.2-1) unstable; urgency=medium
 
