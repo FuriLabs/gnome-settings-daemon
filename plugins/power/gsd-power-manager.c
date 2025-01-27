@@ -1035,11 +1035,13 @@ engine_device_warning_changed_cb (UpDevice *device, GParamSpec *pspec, GsdPowerM
         g_autofree char *serial = NULL;
         UpDeviceLevel warning;
         UpDeviceKind kind;
+        gdouble percentage;
 
         g_object_get (device,
                       "serial", &serial,
                       "warning-level", &warning,
                       "kind", &kind,
+                      "percentage", &percentage,
                       NULL);
 
         if (!engine_device_debounce_warn (manager, kind, warning, serial))
@@ -1050,7 +1052,8 @@ engine_device_warning_changed_cb (UpDevice *device, GParamSpec *pspec, GsdPowerM
                 engine_ups_discharging (manager, device);
         } else if (warning == UP_DEVICE_LEVEL_LOW) {
                 g_debug ("** EMIT: charge-low");
-                engine_charge_low (manager, device);
+                if (percentage <= 10.0)
+                        engine_charge_low (manager, device);
         } else if (warning == UP_DEVICE_LEVEL_CRITICAL) {
                 g_debug ("** EMIT: charge-critical");
                 engine_charge_critical (manager, device);
