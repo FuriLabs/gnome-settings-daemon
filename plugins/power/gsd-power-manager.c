@@ -390,7 +390,7 @@ create_notification (const char *summary,
         notify_notification_set_hint_string (notification, "x-gnome-privacy-scope",
                                              notification_privacy_scope_to_string (privacy_scope));
         notify_notification_set_urgency (notification,
-                                         NOTIFY_URGENCY_CRITICAL);
+                                         NOTIFY_URGENCY_NORMAL);
         *weak_pointer_location = notification;
         g_object_add_weak_pointer (G_OBJECT (notification),
                                    (gpointer *) weak_pointer_location);
@@ -2525,7 +2525,7 @@ show_sleep_warning (GsdPowerManager *manager)
         notify_notification_set_timeout (manager->notification_sleep_warning,
                                          NOTIFY_EXPIRES_NEVER);
         notify_notification_set_urgency (manager->notification_sleep_warning,
-                                         NOTIFY_URGENCY_CRITICAL);
+                                         NOTIFY_URGENCY_NORMAL);
 
         notify_notification_show (manager->notification_sleep_warning, NULL);
 }
