@@ -852,6 +852,28 @@ gsd_backlight_set_brightness_min (GsdBacklight *backlight, gint brightness)
         backlight->brightness_min = brightness;
 }
 
+/**
+ * gsd_backlight_get_brightness_sysfs
+ * @backlight: a #GsdBacklight
+ *
+ * Read current brightness value from sysfs
+ *
+ * Returns: the current brightness value, or -1 on error
+ **/
+gint
+gsd_backlight_get_brightness_sysfs (GsdBacklight *backlight)
+{
+        gint brightness;
+
+        brightness = g_udev_device_get_sysfs_attr_as_int (backlight->udev_device, "brightness");
+        if (brightness < 0) {
+                g_warning ("Failed to read brightness from sysfs");
+                return -1;
+        }
+
+        return brightness;
+}
+
 static void
 gsd_backlight_get_property (GObject    *object,
                             guint       prop_id,

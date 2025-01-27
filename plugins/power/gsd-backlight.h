@@ -73,6 +73,7 @@ gint gsd_backlight_get_max_brightness    (GsdBacklight *backlight);
 gint gsd_backlight_get_cur_brightness    (GsdBacklight *backlight);
 void gsd_backlight_set_brightness_min    (GsdBacklight         *backlight,
                                           gint                  brightness);
+gint gsd_backlight_get_brightness_sysfs  (GsdBacklight *backlight);
 
 GsdBacklight* gsd_backlight_new          (GError              **error);
 

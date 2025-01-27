@@ -1319,18 +1319,45 @@ set_power_saving_mode (GsdPowerManager  *manager,
 static void
 backlight_enable (GsdPowerManager *manager)
 {
-        gint min_brightness;
-        min_brightness = g_settings_get_int (manager->settings_droidian_power,
-                                             "min-brightness-level");
+        gint sysfs_brightness = gsd_backlight_get_brightness_sysfs (manager->backlight);
+        gint max_brightness = gsd_backlight_get_max_brightness (manager->backlight);
+        gint min_brightness = g_settings_get_int (manager->settings_droidian_power, "min-brightness-level");
+        guint sysfs_percentage = ABS_TO_PERCENTAGE(min_brightness, max_brightness, sysfs_brightness);
+
         iio_proxy_claim_light (manager, TRUE);
         set_power_saving_mode (manager, GSD_POWER_SAVE_MODE_ON);
 
         if (manager->saved_brightness > 0) {
+                g_debug ("Setting backlight to saved value: %d", manager->saved_brightness);
                 gsd_backlight_set_brightness_async (manager->backlight, manager->saved_brightness, NULL, NULL, NULL);
-
-                if (manager->backlight)
-                        gsd_backlight_set_brightness_min (manager->backlight, min_brightness);
+        } else if (sysfs_brightness > 0) {
+                /* FakeShell: so here is the deal: if we don't have a good saved brightness value (such as when screen brightness gets set to 0 when DPM is on)
+                 * then we need to manage the brightness somehow or else user will be locked out with a screen that cannot be turned on (it will try to set saved_brightness and its 0)
+                 * so the solution here is to read the last value in udev (which is cached in the proxy) and set that if it is available. now the second issue comes into play
+                 * the ABS_TO_PERCENTAGE function was not designed for such a large brightness range (such as 0 to 2047), so lets say the brightness percentage is 5 (or a small value)
+                 * and we get a percentage, ABS_TO_PERCENTAGE(0, 2047, 5) ends up at 0% since it evaluates (as an example for 5) to 0.74 which is rounded to 0!
+                 * now here we have 2 options. either rework how gsd power manages brightness completely (which will be hell to rebase on upstream releases)
+                 * or deal with this limitation and check if sysfs_brightness is greater than 0 AND sysfs_percentage is equal or less than 0 then just set brightness to 1
+                 * which ends up at 40 in our 0-2047 range.
+                 * the last issue is percentage can never be accurate on startup so when gsd-power starts it will always set brightness to a value just a bit higher than it actually is
+                 * the reason for this is in gsd-backlight, set_brightness_async (and all the helpers) get brightness as an integer, but obviously, an integer cannot be accurate
+                 * when we have a range of 0-2047. as a result, on gsd-power startup it will always set the brightness just a tad higher than it currently is so that it can manage it
+                 * from that point on with its own calculations. at last, if udev doesn't have a cached value and we don't have anything either, set 50% to make the device usable again
+                 */
+                if (sysfs_percentage <= 0) {
+                        g_debug ("No saved brightness value available, sysfs brightness is %d but brightness percentage evaluates to 0, setting to 1 percent", sysfs_brightness);
+                        gsd_backlight_set_brightness_async (manager->backlight, 1, NULL, NULL, NULL);
+                } else {
+                        g_debug ("No saved brightnes value available, setting brightness to the last udev value with percentage %d", sysfs_percentage);
+                        gsd_backlight_set_brightness_async (manager->backlight, sysfs_percentage, NULL, NULL, NULL);
+                }
+        } else {
+                g_debug ("No backlight value available, setting to 50 percent");
+                gsd_backlight_set_brightness_async (manager->backlight, 50, NULL, NULL, NULL);
         }
+
+        if (manager->backlight)
+                gsd_backlight_set_brightness_min (manager->backlight, min_brightness);
 
         g_debug ("TESTSUITE: Unblanked screen");
 }
