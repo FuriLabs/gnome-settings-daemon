@@ -1,3 +1,9 @@
+gnome-settings-daemon (48~beta-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 04 Feb 2025 08:41:57 -0500
+
 gnome-settings-daemon (47.2-1) unstable; urgency=medium
 
   * New upstream release (LP: #2085060)
