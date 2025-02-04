@@ -10,7 +10,7 @@ Subject: media-keys: restore terminal keyboard shortcut schema
  4 files changed, 32 insertions(+)
 
 diff --git a/data/org.gnome.settings-daemon.plugins.media-keys.gschema.xml.in b/data/org.gnome.settings-daemon.plugins.media-keys.gschema.xml.in
-index ef5be62..590d52d 100644
+index f99d69a..255d369 100644
 --- a/data/org.gnome.settings-daemon.plugins.media-keys.gschema.xml.in
 +++ b/data/org.gnome.settings-daemon.plugins.media-keys.gschema.xml.in
 @@ -96,6 +96,11 @@
@@ -25,7 +25,7 @@ index ef5be62..590d52d 100644
      <key name="www" type="s">
        <default>'XF86WWW'</default>
        <summary>Launch web browser</summary>
-@@ -282,6 +287,11 @@
+@@ -292,6 +297,11 @@
        <summary>Microphone mute/unmute</summary>
        <description>Binding to mute/unmute the microphone.</description>
      </key>
@@ -38,10 +38,10 @@ index ef5be62..590d52d 100644
        <default>['']</default>
        <summary>Launch web browser</summary>
 diff --git a/plugins/media-keys/gsd-media-keys-manager.c b/plugins/media-keys/gsd-media-keys-manager.c
-index 60ff2ce..722a61f 100644
+index 997f6d7..2c9ef3b 100644
 --- a/plugins/media-keys/gsd-media-keys-manager.c
 +++ b/plugins/media-keys/gsd-media-keys-manager.c
-@@ -1103,6 +1103,22 @@ gnome_session_shutdown_cb (GObject *source_object,
+@@ -1189,6 +1189,22 @@ gnome_session_shutdown_cb (GObject *source_object,
          }
  }
  
@@ -64,7 +64,7 @@ index 60ff2ce..722a61f 100644
  static void
  gnome_session_shutdown (GsdMediaKeysManager *manager)
  {
-@@ -2405,6 +2421,9 @@ do_action (GsdMediaKeysManager *manager,
+@@ -2497,6 +2513,9 @@ do_action (GsdMediaKeysManager *manager,
          case HELP_KEY:
                  do_url_action (manager, "ghelp", timestamp);
                  break;
@@ -74,7 +74,7 @@ index 60ff2ce..722a61f 100644
          case WWW_KEY:
                  do_url_action (manager, "http", timestamp);
                  break;
-@@ -2979,6 +2998,7 @@ migrate_keybinding_settings (void)
+@@ -3071,6 +3090,7 @@ migrate_keybinding_settings (void)
                  { "volume-mute",                "volume-mute",                  map_keybinding },
                  { "volume-up",                  "volume-up",                    map_keybinding },
                  { "mic-mute",                   "mic-mute",                     map_keybinding },
@@ -83,10 +83,10 @@ index 60ff2ce..722a61f 100644
                  { "magnifier",                  "magnifier",                    map_keybinding },
                  { "screenreader",               "screenreader",                 map_keybinding },
 diff --git a/plugins/media-keys/media-keys.h b/plugins/media-keys/media-keys.h
-index 801a13b..cef50bd 100644
+index e8690e2..4f9be01 100644
 --- a/plugins/media-keys/media-keys.h
 +++ b/plugins/media-keys/media-keys.h
-@@ -42,6 +42,7 @@ typedef enum {
+@@ -44,6 +44,7 @@ typedef enum {
          CONTROL_CENTER_KEY,
          SCREENSAVER_KEY,
          HELP_KEY,
@@ -95,10 +95,10 @@ index 801a13b..cef50bd 100644
          PLAY_KEY,
          PAUSE_KEY,
 diff --git a/plugins/media-keys/shortcuts-list.h b/plugins/media-keys/shortcuts-list.h
-index c8f084c..7a70c8c 100644
+index c4c6404..366afe6 100644
 --- a/plugins/media-keys/shortcuts-list.h
 +++ b/plugins/media-keys/shortcuts-list.h
-@@ -64,6 +64,7 @@ static struct {
+@@ -68,6 +68,7 @@ static struct {
          { CONTROL_CENTER_KEY, "control-center", TRUE, GSD_ACTION_MODE_LAUNCHER, META_KEY_BINDING_IGNORE_AUTOREPEAT },
          { SCREENSAVER_KEY, "screensaver", TRUE, SCREENSAVER_MODE, META_KEY_BINDING_IGNORE_AUTOREPEAT },
          { HELP_KEY, "help", FALSE, GSD_ACTION_MODE_LAUNCHER, META_KEY_BINDING_IGNORE_AUTOREPEAT },

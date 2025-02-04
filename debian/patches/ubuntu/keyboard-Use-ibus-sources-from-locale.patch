@@ -12,7 +12,7 @@ Forwarded: not-needed
  1 file changed, 67 insertions(+), 2 deletions(-)
 
 diff --git a/plugins/keyboard/gsd-keyboard-manager.c b/plugins/keyboard/gsd-keyboard-manager.c
-index 15247c7..7478033 100644
+index 6098106..d87f0a3 100644
 --- a/plugins/keyboard/gsd-keyboard-manager.c
 +++ b/plugins/keyboard/gsd-keyboard-manager.c
 @@ -131,6 +131,63 @@ schema_is_installed (const char *schema)
@@ -130,6 +130,6 @@ index 15247c7..7478033 100644
 +        if (is_first_run)
 +                add_ibus_sources_from_locale (settings);
 +
-         options = g_settings_get_strv (settings, KEY_KEYBOARD_OPTIONS);
-         if (g_strv_length (options) < 1)
+         options = g_settings_get_user_value (settings, KEY_KEYBOARD_OPTIONS);
+         if (options == NULL)
                  get_options_from_xkb_config (manager);
