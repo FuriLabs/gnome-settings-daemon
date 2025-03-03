@@ -12,7 +12,7 @@ Forwarded: not-needed
  1 file changed, 67 insertions(+), 2 deletions(-)
 
 diff --git a/plugins/keyboard/gsd-keyboard-manager.c b/plugins/keyboard/gsd-keyboard-manager.c
-index 6098106..d87f0a3 100644
+index 64dde75..37cc94b 100644
 --- a/plugins/keyboard/gsd-keyboard-manager.c
 +++ b/plugins/keyboard/gsd-keyboard-manager.c
 @@ -131,6 +131,63 @@ schema_is_installed (const char *schema)
