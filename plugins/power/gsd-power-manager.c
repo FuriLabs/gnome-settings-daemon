@@ -45,7 +45,7 @@
 #include "gsd-backlight.h"
 #include "gnome-settings-profile.h"
 #include "gnome-settings-bus.h"
-#include "gsd-enums.h"
+#include "gnome-settings-daemon/gsd-enums.h"
 #include "gsd-power-manager.h"
 
 #include "gsd-display-config-glue.h"
@@ -60,9 +60,9 @@
 #define UPOWER_DBUS_INTERFACE                   "org.freedesktop.UPower"
 #define UPOWER_DBUS_INTERFACE_KBDBACKLIGHT      "org.freedesktop.UPower.KbdBacklight"
 
-#define PPD_DBUS_NAME                           "net.hadess.PowerProfiles"
-#define PPD_DBUS_PATH                           "/net/hadess/PowerProfiles"
-#define PPD_DBUS_INTERFACE                      "net.hadess.PowerProfiles"
+#define PPD_DBUS_NAME                           "org.freedesktop.UPower.PowerProfiles"
+#define PPD_DBUS_PATH                           "/org/freedesktop/UPower/PowerProfiles"
+#define PPD_DBUS_INTERFACE                      "org.freedesktop.UPower.PowerProfiles"
 
 #define GSD_POWER_SETTINGS_SCHEMA               "org.gnome.settings-daemon.plugins.power"
 
