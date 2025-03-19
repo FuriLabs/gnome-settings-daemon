@@ -1,4 +1,4 @@
-gnome-settings-daemon (48.0-1ubuntu1) UNRELEASED; urgency=medium
+gnome-settings-daemon (48.0-1ubuntu1) plucky; urgency=medium
 
   * Merge with Debian. Remaining changes:
     + debian/control:
