@@ -1,3 +1,9 @@
+gnome-settings-daemon (48.0-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 17 Mar 2025 13:33:33 -0400
+
 gnome-settings-daemon (48~rc-1ubuntu1) plucky; urgency=medium
 
   * Merge with Debian. Remaining changes:

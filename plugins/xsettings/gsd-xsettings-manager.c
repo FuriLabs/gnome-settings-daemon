@@ -38,6 +38,7 @@
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
 
+#include "gio/gio.h"
 #include "gnome-settings-profile.h"
 #include "gnome-settings-daemon/gsd-enums.h"
 #include "gsd-xsettings-manager.h"
@@ -274,7 +275,7 @@ struct _FixedEntry {
 
 struct _GsdXSettingsManager
 {
-        GObject            parent;
+        GApplication       parent;
 
         guint              start_idle_id;
         XSettingsManager  *manager;
@@ -309,27 +310,13 @@ struct _GsdXSettingsManager
         guint              gtk_settings_name_id;
 };
 
-#define GSD_XSETTINGS_ERROR gsd_xsettings_error_quark ()
-
-enum {
-        GSD_XSETTINGS_ERROR_INIT
-};
-
 static void     gsd_xsettings_manager_class_init  (GsdXSettingsManagerClass *klass);
 static void     gsd_xsettings_manager_init        (GsdXSettingsManager      *xsettings_manager);
 static void     gsd_xsettings_manager_finalize    (GObject                  *object);
 
 static void     register_manager_dbus             (GsdXSettingsManager *manager);
 
-G_DEFINE_TYPE (GsdXSettingsManager, gsd_xsettings_manager, G_TYPE_OBJECT)
-
-static gpointer manager_object = NULL;
-
-static GQuark
-gsd_xsettings_error_quark (void)
-{
-        return g_quark_from_static_string ("gsd-xsettings-error-quark");
-}
+G_DEFINE_TYPE (GsdXSettingsManager, gsd_xsettings_manager, G_TYPE_APPLICATION)
 
 static void
 translate_bool_int (GsdXSettingsManager *manager,
@@ -1350,10 +1337,10 @@ set_devicepresence_handler (GsdXSettingsManager *manager)
         manager->user_seat = user_seat;
 }
 
-gboolean
-gsd_xsettings_manager_start (GsdXSettingsManager *manager,
-                             GError             **error)
+static void
+gsd_xsettings_manager_startup (GApplication *app)
 {
+        GsdXSettingsManager *manager = GSD_XSETTINGS_MANAGER (app);
         GVariant    *overrides;
         guint        i;
         GList       *list, *l;
@@ -1365,10 +1352,9 @@ gsd_xsettings_manager_start (GsdXSettingsManager *manager,
         migrate_settings ();
 
         if (!setup_xsettings_managers (manager)) {
-                g_set_error (error, GSD_XSETTINGS_ERROR,
-                             GSD_XSETTINGS_ERROR_INIT,
-                             "Could not initialize xsettings manager.");
-                return FALSE;
+                g_printerr ("Could not initialize xsettings manager.");
+                g_application_release (app);
+                return;
         }
 
 	set_devicepresence_handler (manager);
@@ -1505,16 +1491,22 @@ gsd_xsettings_manager_start (GsdXSettingsManager *manager,
         queue_notify (manager);
         g_variant_unref (overrides);
 
+        G_APPLICATION_CLASS (gsd_xsettings_manager_parent_class)->startup (app);
 
         gnome_settings_profile_end (NULL);
-
-        return TRUE;
 }
 
-void
-gsd_xsettings_manager_stop (GsdXSettingsManager *manager)
+static void
+gsd_xsettings_manager_shutdown (GApplication *app)
 {
+        GsdXSettingsManager *manager = GSD_XSETTINGS_MANAGER (app);
+
         g_debug ("Stopping xsettings manager");
+
+        if (manager->notify_idle_id) {
+                g_source_remove (manager->notify_idle_id);
+                manager->notify_idle_id = 0;
+        }
 
         if (manager->introspect_properties_changed_id) {
                 g_dbus_connection_signal_unsubscribe (manager->dbus_connection,
@@ -1583,14 +1575,21 @@ gsd_xsettings_manager_stop (GsdXSettingsManager *manager)
         }
 
         g_clear_object (&manager->interface_settings);
+
+        g_clear_handle_id (&manager->start_idle_id, g_source_remove);
+
+        G_APPLICATION_CLASS (gsd_xsettings_manager_parent_class)->shutdown (app);
 }
 
 static void
 gsd_xsettings_manager_class_init (GsdXSettingsManagerClass *klass)
 {
         GObjectClass *object_class = G_OBJECT_CLASS (klass);
+        GApplicationClass *application_class = G_APPLICATION_CLASS (klass);
 
         object_class->finalize = gsd_xsettings_manager_finalize;
+        application_class->startup = gsd_xsettings_manager_startup;
+        application_class->shutdown = gsd_xsettings_manager_shutdown;
 }
 
 static void
@@ -1615,11 +1614,6 @@ gsd_xsettings_manager_finalize (GObject *object)
         xsettings_manager = GSD_XSETTINGS_MANAGER (object);
 
         g_return_if_fail (xsettings_manager != NULL);
-
-        gsd_xsettings_manager_stop (xsettings_manager);
-
-        if (xsettings_manager->start_idle_id != 0)
-                g_source_remove (xsettings_manager->start_idle_id);
 
         g_clear_object (&xsettings_manager->dbus_connection);
 
@@ -1678,18 +1672,4 @@ register_manager_dbus (GsdXSettingsManager *manager)
                                                                       GTK_SETTINGS_DBUS_NAME,
                                                                       G_BUS_NAME_OWNER_FLAGS_NONE,
                                                                       NULL, NULL, NULL, NULL);
-}
-
-GsdXSettingsManager *
-gsd_xsettings_manager_new (void)
-{
-        if (manager_object != NULL) {
-                g_object_ref (manager_object);
-        } else {
-                manager_object = g_object_new (GSD_TYPE_XSETTINGS_MANAGER, NULL);
-                g_object_add_weak_pointer (manager_object,
-                                           (gpointer *) &manager_object);
-        }
-
-        return GSD_XSETTINGS_MANAGER (manager_object);
 }

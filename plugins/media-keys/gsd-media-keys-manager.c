@@ -237,9 +237,7 @@ static void     keys_sync_queue                    (GsdMediaKeysManager *manager
 static void     keys_sync_continue                 (GsdMediaKeysManager *manager);
 
 
-G_DEFINE_TYPE_WITH_PRIVATE (GsdMediaKeysManager, gsd_media_keys_manager, G_TYPE_OBJECT)
-
-static gpointer manager_object = NULL;
+G_DEFINE_TYPE_WITH_PRIVATE (GsdMediaKeysManager, gsd_media_keys_manager, G_TYPE_APPLICATION)
 
 static void
 media_key_unref (MediaKey *key)
@@ -3089,10 +3087,10 @@ migrate_keybinding_settings (void)
                                     binding_entries, G_N_ELEMENTS (binding_entries));
 }
 
-gboolean
-gsd_media_keys_manager_start (GsdMediaKeysManager *manager,
-                              GError             **error)
+static void
+gsd_media_keys_manager_startup (GApplication *app)
 {
+        GsdMediaKeysManager *manager = GSD_MEDIA_KEYS_MANAGER (app);
         GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
         const char * const subsystems[] = { "input", "usb", "sound", NULL };
 
@@ -3108,16 +3106,17 @@ gsd_media_keys_manager_start (GsdMediaKeysManager *manager,
         priv->start_idle_id = g_idle_add ((GSourceFunc) start_media_keys_idle_cb, manager);
         g_source_set_name_by_id (priv->start_idle_id, "[gnome-settings-daemon] start_media_keys_idle_cb");
 
-        register_manager (manager_object);
+        register_manager (manager);
+
+        G_APPLICATION_CLASS (gsd_media_keys_manager_parent_class)->startup (app);
 
         gnome_settings_profile_end (NULL);
-
-        return TRUE;
 }
 
-void
-gsd_media_keys_manager_stop (GsdMediaKeysManager *manager)
+static void
+gsd_media_keys_manager_shutdown (GApplication *app)
 {
+        GsdMediaKeysManager *manager = GSD_MEDIA_KEYS_MANAGER (app);
         GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
 
         g_debug ("Stopping media_keys manager");
@@ -3229,6 +3228,8 @@ gsd_media_keys_manager_stop (GsdMediaKeysManager *manager)
                 g_bus_unwatch_name (priv->audio_selection_watch_id);
         priv->audio_selection_watch_id = 0;
         clear_audio_selection (manager);
+
+        G_APPLICATION_CLASS (gsd_media_keys_manager_parent_class)->shutdown (app);
 }
 
 static void
@@ -3377,8 +3378,12 @@ static void
 gsd_media_keys_manager_class_init (GsdMediaKeysManagerClass *klass)
 {
         GObjectClass   *object_class = G_OBJECT_CLASS (klass);
+        GApplicationClass *application_class = G_APPLICATION_CLASS (klass);
 
         object_class->finalize = gsd_media_keys_manager_finalize;
+
+        application_class->startup = gsd_media_keys_manager_startup;
+        application_class->shutdown = gsd_media_keys_manager_shutdown;
 }
 
 static void
@@ -3477,8 +3482,6 @@ gsd_media_keys_manager_finalize (GObject *object)
 {
         GsdMediaKeysManager *manager = GSD_MEDIA_KEYS_MANAGER (object);
         GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
-
-        gsd_media_keys_manager_stop (manager);
 
         if (priv->inhibit_keys_fd != -1)
                 close (priv->inhibit_keys_fd);
@@ -3632,18 +3635,4 @@ register_manager (GsdMediaKeysManager *manager)
                    priv->bus_cancellable,
                    (GAsyncReadyCallback) on_bus_gotten,
                    manager);
-}
-
-GsdMediaKeysManager *
-gsd_media_keys_manager_new (void)
-{
-        if (manager_object != NULL) {
-                g_object_ref (manager_object);
-        } else {
-                manager_object = g_object_new (GSD_TYPE_MEDIA_KEYS_MANAGER, NULL);
-                g_object_add_weak_pointer (manager_object,
-                                           (gpointer *) &manager_object);
-        }
-
-        return GSD_MEDIA_KEYS_MANAGER (manager_object);
 }
