@@ -9,7 +9,7 @@ Subject: keyboard: sync input sources to accountsservice
  3 files changed, 88 insertions(+)
 
 diff --git a/meson.build b/meson.build
-index 95f4c71..bf873ef 100644
+index db8bd64..3dd4799 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -94,6 +94,7 @@ endif
@@ -21,7 +21,7 @@ index 95f4c71..bf873ef 100644
  geocode_glib_dep = dependency('geocode-glib-2.0', version: '>= 3.26.3', required: false)
  if not geocode_glib_dep.found()
 diff --git a/plugins/xsettings/gsd-xsettings-manager.c b/plugins/xsettings/gsd-xsettings-manager.c
-index 7bc3424..0c3c903 100644
+index fcc1d9d..7cbc809 100644
 --- a/plugins/xsettings/gsd-xsettings-manager.c
 +++ b/plugins/xsettings/gsd-xsettings-manager.c
 @@ -38,6 +38,8 @@
@@ -30,10 +30,10 @@ index 7bc3424..0c3c903 100644
  
 +#include <act/act.h>
 +
+ #include "gio/gio.h"
  #include "gnome-settings-profile.h"
  #include "gnome-settings-daemon/gsd-enums.h"
- #include "gsd-xsettings-manager.h"
-@@ -57,6 +59,7 @@
+@@ -58,6 +60,7 @@
  #define WM_SETTINGS_SCHEMA        "org.gnome.desktop.wm.preferences"
  #define A11Y_SCHEMA               "org.gnome.desktop.a11y"
  #define A11Y_INTERFACE_SCHEMA     "org.gnome.desktop.a11y.interface"
@@ -41,7 +41,7 @@ index 7bc3424..0c3c903 100644
  #define CLASSIC_WM_SETTINGS_SCHEMA "org.gnome.shell.extensions.classic-overrides"
  
  #define XSETTINGS_PLUGIN_SCHEMA "org.gnome.settings-daemon.plugins.xsettings"
-@@ -75,6 +78,7 @@
+@@ -76,6 +79,7 @@
  
  #define HIGH_CONTRAST_KEY "high-contrast"
  
@@ -49,7 +49,7 @@ index 7bc3424..0c3c903 100644
  #define GTK_IM_MODULE_KEY      "gtk-im-module"
  
  #define GTK_SETTINGS_DBUS_PATH "/org/gtk/Settings"
-@@ -285,6 +289,7 @@ struct _GsdXSettingsManager
+@@ -286,6 +290,7 @@ struct _GsdXSettingsManager
          gint64             fontconfig_timestamp;
  
          GSettings         *interface_settings;
@@ -57,7 +57,7 @@ index 7bc3424..0c3c903 100644
          GdkSeat           *user_seat;
  
          GsdXSettingsGtk   *gtk;
-@@ -1291,12 +1296,76 @@ migrate_settings (void)
+@@ -1278,12 +1283,76 @@ migrate_settings (void)
                                      mouse_entries, G_N_ELEMENTS (mouse_entries));
  }
  
@@ -134,7 +134,7 @@ index 7bc3424..0c3c903 100644
          setting = g_settings_get_string (manager->interface_settings,
                                           GTK_IM_MODULE_KEY);
          if (setting && *setting)
-@@ -1306,6 +1375,18 @@ update_gtk_im_module (GsdXSettingsManager *manager)
+@@ -1293,6 +1362,18 @@ update_gtk_im_module (GsdXSettingsManager *manager)
  
          xsettings_manager_set_string (manager->manager, "Gtk/IMModule", module);
          g_free (setting);
@@ -153,7 +153,7 @@ index 7bc3424..0c3c903 100644
  }
  
  static void
-@@ -1376,6 +1457,10 @@ gsd_xsettings_manager_start (GsdXSettingsManager *manager,
+@@ -1362,6 +1443,10 @@ gsd_xsettings_manager_startup (GApplication *app)
          g_signal_connect_swapped (manager->interface_settings,
                                    "changed::" GTK_IM_MODULE_KEY,
                                    G_CALLBACK (update_gtk_im_module), manager);
@@ -164,20 +164,20 @@ index 7bc3424..0c3c903 100644
          update_gtk_im_module (manager);
  
          manager->monitors_changed_id =
-@@ -1582,6 +1667,7 @@ gsd_xsettings_manager_stop (GsdXSettingsManager *manager)
+@@ -1574,6 +1659,7 @@ gsd_xsettings_manager_shutdown (GApplication *app)
                  manager->user_seat = NULL;
          }
  
 +        g_clear_object (&manager->input_sources_settings);
          g_clear_object (&manager->interface_settings);
- }
  
+         g_clear_handle_id (&manager->start_idle_id, g_source_remove);
 diff --git a/plugins/xsettings/meson.build b/plugins/xsettings/meson.build
-index 9cde0a1..5202ffc 100644
+index 2054f63..d90243e 100644
 --- a/plugins/xsettings/meson.build
 +++ b/plugins/xsettings/meson.build
-@@ -12,6 +12,7 @@ sources = gsd_xsettings_gtk + fc_monitor + wm_button_layout_translation + files(
- )
+@@ -14,6 +14,7 @@ sources = gsd_xsettings_gtk + fc_monitor + wm_button_layout_translation + files(
+ sources += main_helper_sources
  
  deps = plugins_deps + [
 +  accountsservice_dep,
