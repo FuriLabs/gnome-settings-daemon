@@ -1,3 +1,11 @@
+gnome-settings-daemon (48.0-1ubuntu2) plucky; urgency=medium
+
+  * d/p/power-Ensure-backlight-iface-signal-gets-emited-on-startu.patch:
+    Add proposed patch to restore the brightness slider in quicksettings
+    LP: #2105397
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 08 Apr 2025 20:39:38 +0200
+
 gnome-settings-daemon (48.0-1ubuntu1) plucky; urgency=medium
 
   * Merge with Debian. Remaining changes:
