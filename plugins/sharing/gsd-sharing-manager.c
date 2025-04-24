@@ -63,7 +63,7 @@ typedef struct {
 
 struct _GsdSharingManager
 {
-        GApplication             parent;
+        GsdApplication           parent;
 
         GDBusNodeInfo           *introspection_data;
         guint                    name_id;
@@ -123,7 +123,7 @@ static void     gsd_sharing_manager_start_service (GsdSharingManager *manager,
 static void     gsd_sharing_manager_stop_service (GsdSharingManager *manager,
                                                   const char        *service_name);
 
-G_DEFINE_TYPE (GsdSharingManager, gsd_sharing_manager, G_TYPE_APPLICATION)
+G_DEFINE_TYPE (GsdSharingManager, gsd_sharing_manager, GSD_TYPE_APPLICATION)
 
 static const char * const configurable_services[] = {
         "rygel",
@@ -147,9 +147,9 @@ handle_unit_cb (GObject      *source_object,
                 GAsyncResult *res,
                 gpointer      user_data)
 {
-        GError *error = NULL;
-        GVariant *ret;
-        const char *operation = user_data;
+        g_autoptr (GError) error = NULL;
+        g_autoptr (GVariant) ret = NULL;
+        GsdSharingManager *manager = user_data;
 
         ret = g_dbus_connection_call_finish (G_DBUS_CONNECTION (source_object),
                                              res, &error);
@@ -158,13 +158,10 @@ handle_unit_cb (GObject      *source_object,
 
                 if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED) &&
                     g_strcmp0 (remote_error, "org.freedesktop.systemd1.NoSuchUnit") != 0)
-                        g_warning ("Failed to %s service: %s", operation, error->message);
-                g_error_free (error);
-                return;
+                        g_warning ("Failed to handle service change: %s", error->message);
         }
 
-        g_variant_unref (ret);
-
+        g_application_release (G_APPLICATION (manager));
 }
 
 static void
@@ -173,6 +170,8 @@ gsd_sharing_manager_handle_service (GsdSharingManager   *manager,
                                     const char          *service_name)
 {
         char *service_file;
+
+        g_application_hold (G_APPLICATION (manager));
 
         service_file = g_strdup_printf ("%s.service", service_name);
         g_dbus_connection_call (manager->connection,
@@ -186,7 +185,7 @@ gsd_sharing_manager_handle_service (GsdSharingManager   *manager,
                                 -1,
                                 manager->cancellable,
                                 handle_unit_cb,
-                                (gpointer) method);
+                                (gpointer) manager);
         g_free (service_file);
 }
 
@@ -945,19 +944,29 @@ cancel_pending_wait_tasks (GsdSharingManager *manager)
 }
 
 static void
+gsd_sharing_manager_pre_shutdown (GsdApplication *app)
+{
+        GsdSharingManager *manager = GSD_SHARING_MANAGER (app);
+
+        g_debug ("Pre-shutdown on sharing manager");
+
+        cancel_pending_wait_tasks (manager);
+
+        if (manager->sharing_status != GSD_SHARING_STATUS_OFFLINE &&
+            manager->connection != NULL) {
+                manager->sharing_status = GSD_SHARING_STATUS_OFFLINE;
+                gsd_sharing_manager_sync_services (manager);
+        }
+
+        GSD_APPLICATION_CLASS (gsd_sharing_manager_parent_class)->pre_shutdown (app);
+}
+
+static void
 gsd_sharing_manager_shutdown (GApplication *app)
 {
         GsdSharingManager *manager = GSD_SHARING_MANAGER (app);
 
         g_debug ("Stopping sharing manager");
-
-        cancel_pending_wait_tasks (manager);
-
-        if (manager->sharing_status == GSD_SHARING_STATUS_AVAILABLE &&
-            manager->connection != NULL) {
-                manager->sharing_status = GSD_SHARING_STATUS_OFFLINE;
-                gsd_sharing_manager_sync_services (manager);
-        }
 
         if (manager->cancellable) {
                 g_cancellable_cancel (manager->cancellable);
@@ -987,12 +996,15 @@ static void
 gsd_sharing_manager_class_init (GsdSharingManagerClass *klass)
 {
         GObjectClass *object_class = G_OBJECT_CLASS (klass);
+        GsdApplicationClass *gsd_application_class = GSD_APPLICATION_CLASS (klass);
         GApplicationClass *application_class = G_APPLICATION_CLASS (klass);
 
         object_class->finalize = gsd_sharing_manager_finalize;
 
         application_class->startup = gsd_sharing_manager_startup;
         application_class->shutdown = gsd_sharing_manager_shutdown;
+
+        gsd_application_class->pre_shutdown = gsd_sharing_manager_pre_shutdown;
 }
 
 static void
