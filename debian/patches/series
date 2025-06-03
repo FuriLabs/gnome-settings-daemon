@@ -5,4 +5,3 @@ ubuntu/media-keys-restore-terminal-keyboard-shortcut-schema.patch
 ubuntu/lid-close-suspend-support.patch
 ubuntu/keyboard-Use-ibus-sources-from-locale.patch
 ubuntu/teach-gsd-about-the-gnome-calculator-snap-.desktop-name.patch
-power-Ensure-backlight-iface-signal-gets-emited-on-startu.patch
