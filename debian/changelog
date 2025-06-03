@@ -1,3 +1,9 @@
+gnome-settings-daemon (48.1-1) unstable; urgency=medium
+
+  * New upstream release (LP: #2105397)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 24 Apr 2025 08:30:36 -0400
+
 gnome-settings-daemon (48.0-1ubuntu2) plucky; urgency=medium
 
   * d/p/power-Ensure-backlight-iface-signal-gets-emited-on-startu.patch:

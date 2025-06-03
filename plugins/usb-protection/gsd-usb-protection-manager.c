@@ -68,7 +68,7 @@
 
 struct _GsdUsbProtectionManager
 {
-        GApplication        parent;
+        GsdApplication      parent;
         guint               start_idle_id;
         GDBusNodeInfo      *introspection_data;
         GSettings          *settings;
@@ -102,7 +102,7 @@ typedef enum {
         POLICY_APPLIED_ATTRIBUTES
 } UsbGuardPolicyApplied;
 
-G_DEFINE_TYPE (GsdUsbProtectionManager, gsd_usb_protection_manager, G_TYPE_APPLICATION)
+G_DEFINE_TYPE (GsdUsbProtectionManager, gsd_usb_protection_manager, GSD_TYPE_APPLICATION)
 
 #define GSD_DBUS_NAME "org.gnome.SettingsDaemon"
 #define GSD_DBUS_PATH "/org/gnome/SettingsDaemon"
@@ -1085,8 +1085,7 @@ usb_protection_proxy_ready (GObject      *source_object,
 
         manager->screensaver_proxy = gnome_settings_bus_get_screen_saver_proxy ();
         if (!manager->screensaver_proxy) {
-                if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-                        g_warning ("Failed to connect to screensaver service: %s", error->message);
+                g_warning ("Failed to connect to screensaver service");
                 g_clear_object (&manager->usb_protection);
                 return;
         }
