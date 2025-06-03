@@ -30,9 +30,9 @@ index fcc1d9d..7cbc809 100644
  
 +#include <act/act.h>
 +
- #include "gio/gio.h"
  #include "gnome-settings-profile.h"
  #include "gnome-settings-daemon/gsd-enums.h"
+ #include "gsd-xsettings-manager.h"
 @@ -58,6 +60,7 @@
  #define WM_SETTINGS_SCHEMA        "org.gnome.desktop.wm.preferences"
  #define A11Y_SCHEMA               "org.gnome.desktop.a11y"
