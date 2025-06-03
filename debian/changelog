@@ -1,3 +1,25 @@
+gnome-settings-daemon (48.1-1ubuntu1) questing; urgency=medium
+
+  * Merge with Debian unstable (LP: #2112003). Remaining changes:
+    + debian/control:
+      - Add Build-Depends: accountsservice
+    + debian/patches/ubuntu:
+      - keyboard-sync-input-sources-to-accountsservice.patch
+      - keyboard-Use-ibus-sources-from-locale.patch
+      - lid-close-suspend-support.patch
+      - media-keys-restore-terminal-keyboard-shortcut-schema.patch
+      - print-notifications-suppress-printer-may-not-be-connected.patch
+      - teach-gsd-about-the-gnome-calculator-snap-.desktop-name.patch
+    + debian/gnome-settings-daemon.install:
+      - Install apport hook
+  * Rebase patches
+  * Dropped changes as they were upstreamed:
+    * d/p/power-Ensure-backlight-iface-signal-gets-emited-on-startu.patch:
+      Add proposed patch to restore the brightness slider in quicksettings
+      (LP #2105397)
+
+ -- Ural Tunaboyu <ural.tunaboyu@canonical.com>  Tue, 03 Jun 2025 11:57:04 -0700
+
 gnome-settings-daemon (48.1-1) unstable; urgency=medium
 
   * New upstream release (LP: #2105397)
