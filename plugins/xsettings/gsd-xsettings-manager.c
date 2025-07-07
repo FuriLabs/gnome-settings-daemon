@@ -34,9 +34,6 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gdesktop-enums.h>
-#include <gdk/gdk.h>
-#include <gdk/gdkx.h>
-#include <gtk/gtk.h>
 
 #include "gnome-settings-profile.h"
 #include "gnome-settings-daemon/gsd-enums.h"
@@ -276,6 +273,8 @@ struct _GsdXSettingsManager
 {
         GsdApplication     parent;
 
+        Display           *xdisplay;
+
         guint              start_idle_id;
         XSettingsManager  *manager;
         GHashTable        *settings;
@@ -285,7 +284,6 @@ struct _GsdXSettingsManager
         gint64             fontconfig_timestamp;
 
         GSettings         *interface_settings;
-        GdkSeat           *user_seat;
 
         GsdXSettingsGtk   *gtk;
 
@@ -295,9 +293,6 @@ struct _GsdXSettingsManager
 
         guint              display_config_watch_id;
         guint              monitors_changed_id;
-
-        guint              device_added_id;
-        guint              device_removed_id;
 
         guint              shell_name_watch_id;
         gboolean           have_shell;
@@ -1025,39 +1020,29 @@ xsettings_callback (GSettings           *settings,
 static void
 terminate_cb (void *data)
 {
-        gboolean *terminated = data;
+        GsdXSettingsManager *manager = data;
 
-        if (*terminated) {
-                return;
-        }
-
-        *terminated = TRUE;
         g_warning ("X Settings Manager is terminating");
-        gtk_main_quit ();
+        g_application_quit (G_APPLICATION (manager));
 }
 
 static gboolean
 setup_xsettings_managers (GsdXSettingsManager *manager)
 {
-        GdkDisplay *display;
-        gboolean    res;
-        gboolean    terminated;
+        manager->xdisplay = XOpenDisplay (NULL);
+        if (!manager->xdisplay)
+                return FALSE;
 
-        display = gdk_display_get_default ();
-
-        res = xsettings_manager_check_running (gdk_x11_display_get_xdisplay (display),
-                                               gdk_x11_screen_get_screen_number (gdk_screen_get_default ()));
-
-        if (res) {
+        if (xsettings_manager_check_running (manager->xdisplay,
+                                              DefaultScreen (manager->xdisplay))) {
                 g_warning ("You can only run one xsettings manager at a time; exiting");
                 return FALSE;
         }
 
-        terminated = FALSE;
-        manager->manager = xsettings_manager_new (gdk_x11_display_get_xdisplay (display),
-                                                  gdk_x11_screen_get_screen_number (gdk_screen_get_default ()),
+        manager->manager = xsettings_manager_new (manager->xdisplay,
+                                                  DefaultScreen (manager->xdisplay),
                                                   terminate_cb,
-                                                  &terminated);
+                                                  manager);
         if (! manager->manager) {
                 g_warning ("Could not create xsettings manager!");
                 return FALSE;
@@ -1300,46 +1285,15 @@ update_gtk_im_module (GsdXSettingsManager *manager)
         g_free (setting);
 }
 
-static void
-device_added_cb (GdkSeat             *user_seat,
-                 GdkDevice           *device,
-                 GsdXSettingsManager *manager)
+static gboolean
+is_xwayland (GsdXSettingsManager *manager)
 {
-        GdkInputSource source;
+        int opcode_ignored, event_ignored, error_ignored;
 
-        source = gdk_device_get_source (device);
-        if (source == GDK_SOURCE_TOUCHSCREEN) {
-                update_gtk_im_module (manager);
-        }
-}
-
-static void
-device_removed_cb (GdkSeat             *user_seat,
-                   GdkDevice           *device,
-                   GsdXSettingsManager *manager)
-{
-        GdkInputSource source;
-
-        source = gdk_device_get_source (device);
-        if (source == GDK_SOURCE_TOUCHSCREEN)
-                update_gtk_im_module (manager);
-}
-
-static void
-set_devicepresence_handler (GsdXSettingsManager *manager)
-{
-        GdkSeat *user_seat;
-
-        if (gnome_settings_is_wayland ())
-                return;
-
-        user_seat = gdk_display_get_default_seat (gdk_display_get_default ());
-
-        manager->device_added_id = g_signal_connect (G_OBJECT (user_seat), "device-added",
-                                                     G_CALLBACK (device_added_cb), manager);
-        manager->device_removed_id = g_signal_connect (G_OBJECT (user_seat), "device-removed",
-                                                       G_CALLBACK (device_removed_cb), manager);
-        manager->user_seat = user_seat;
+        return XQueryExtension (manager->xdisplay, "XWAYLAND",
+                                &opcode_ignored,
+                                &event_ignored,
+                                &error_ignored) == True;
 }
 
 static void
@@ -1363,7 +1317,6 @@ gsd_xsettings_manager_startup (GApplication *app)
                 return;
         }
 
-	set_devicepresence_handler (manager);
         manager->interface_settings = g_settings_new (INTERFACE_SETTINGS_SCHEMA);
         g_signal_connect_swapped (manager->interface_settings,
                                   "changed::" GTK_IM_MODULE_KEY,
@@ -1485,7 +1438,7 @@ gsd_xsettings_manager_startup (GApplication *app)
         update_xft_settings (manager);
 
         /* Launch Xwayland services */
-        if (gnome_settings_is_wayland ())
+        if (is_xwayland (manager))
                 launch_xwayland_services ();
 
         start_fontconfig_monitor (manager);
@@ -1568,15 +1521,12 @@ gsd_xsettings_manager_shutdown (GApplication *app)
                 manager->gtk = NULL;
         }
 
-        if (manager->user_seat != NULL) {
-                g_signal_handler_disconnect (manager->user_seat, manager->device_added_id);
-                g_signal_handler_disconnect (manager->user_seat, manager->device_removed_id);
-                manager->user_seat = NULL;
-        }
-
         g_clear_object (&manager->interface_settings);
 
         g_clear_handle_id (&manager->start_idle_id, g_source_remove);
+
+        if (manager->xdisplay)
+                XCloseDisplay (manager->xdisplay);
 
         G_APPLICATION_CLASS (gsd_xsettings_manager_parent_class)->shutdown (app);
 }
