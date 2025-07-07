@@ -69,7 +69,10 @@ Recommends: iio-sensor-proxy,
             pkexec,
             x11-xserver-utils
 Suggests: usbguard
-Breaks: gnome-shell (<< 47~rc),
+Breaks: gdm (<< 49~alpha.1),
+        gnome-initial-setup (<< 49~alpha),
+        gnome-session (<< 49~alpha.1),
+        gnome-shell (<< 49~alpha.1),
         mutter-common (<< 47~rc),
 Description: daemon handling the GNOME session settings
  This package contains the daemon which is responsible for setting the
