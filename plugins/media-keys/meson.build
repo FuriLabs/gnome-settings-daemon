@@ -27,9 +27,9 @@ deps = plugins_deps + [
   gio_unix_dep,
   gsd_enums_dep,
   gsettings_desktop_dep,
-  libcanberra_gtk_dep,
   libcommon_dep,
   gnome_desktop_dep,
+  gtk_dep,
   libgvc_dep,
   libpulse_mainloop_glib_dep,
   m_dep,
@@ -40,8 +40,6 @@ if enable_gudev
   deps += gudev_dep
 endif
 
-cflags += ['-DUSE_GTK=1']
-
 executable(
   'gsd-' + plugin_name,
   sources,
@@ -51,13 +49,4 @@ executable(
   install: true,
   install_rpath: gsd_pkglibdir,
   install_dir: gsd_libexecdir
-)
-
-program = 'audio-selection-test'
-
-executable(
-  program,
-  program + '.c',
-  include_directories: top_inc,
-  dependencies: deps
 )

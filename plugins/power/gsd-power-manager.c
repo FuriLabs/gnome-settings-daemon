@@ -25,17 +25,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <glib/gi18n.h>
-#include <gtk/gtk.h>
 #include <libupower-glib/upower.h>
 #include <libnotify/notify.h>
-#include <canberra-gtk.h>
 #include <glib-unix.h>
 #include <gio/gunixfdlist.h>
 
 #define GNOME_DESKTOP_USE_UNSTABLE_API
 #include <libgnome-desktop/gnome-idle-monitor.h>
-
-#include <gsd-input-helper.h>
 
 #include "gsd-power-constants.h"
 #include "gsm-inhibitor-flag.h"
@@ -216,8 +212,6 @@ struct _GsdPowerManager
 
         guint                    temporary_unidle_on_ac_id;
         GsdPowerIdleMode         previous_idle_mode;
-
-        guint                    xscreensaver_watchdog_timer_id;
 
         /* Device Properties */
         gboolean                 show_sleep_warnings;
@@ -467,8 +461,11 @@ manager_critical_action_get (GsdPowerManager *manager)
 static gboolean
 manager_critical_action_stop_sound_cb (GsdPowerManager *manager)
 {
+        ca_context *ca_context;
+
         /* stop playing the alert as it's too late to do anything now */
-        play_loop_stop (&manager->critical_alert_timeout_id);
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+        play_loop_stop (ca_context, &manager->critical_alert_timeout_id);
 
         return FALSE;
 }
@@ -794,6 +791,7 @@ engine_charge_low (GsdPowerManager *manager, UpDevice *device)
         gdouble percentage;
         guint battery_level;
         UpDeviceKind kind;
+        ca_context *ca_context;
 
         /* get device properties */
         g_object_get (device,
@@ -850,8 +848,10 @@ engine_charge_low (GsdPowerManager *manager, UpDevice *device)
 
         notify_notification_show (manager->notification_low, NULL);
 
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         /* play the sound, using sounds from the naming spec */
-        ca_context_play (ca_gtk_context_get (), 0,
+        ca_context_play (ca_context, 0,
                          CA_PROP_EVENT_ID, "battery-low",
                          /* TRANSLATORS: this is the sound description */
                          CA_PROP_EVENT_DESCRIPTION, _("Battery is low"), NULL);
@@ -867,6 +867,7 @@ engine_charge_critical (GsdPowerManager *manager, UpDevice *device)
         gdouble percentage;
         guint battery_level;
         UpDeviceKind kind;
+        ca_context *ca_context;
 
         /* get device properties */
         g_object_get (device,
@@ -921,17 +922,19 @@ engine_charge_critical (GsdPowerManager *manager, UpDevice *device)
 
         notify_notification_show (manager->notification_low, NULL);
 
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         switch (kind) {
 
         case UP_DEVICE_KIND_BATTERY:
         case UP_DEVICE_KIND_UPS:
                 g_debug ("critical charge level reached, starting sound loop");
-                play_loop_start (&manager->critical_alert_timeout_id);
+                play_loop_start (ca_context, &manager->critical_alert_timeout_id);
                 break;
 
         default:
                 /* play the sound, using sounds from the naming spec */
-                ca_context_play (ca_gtk_context_get (), 0,
+                ca_context_play (ca_context, 0,
                                  CA_PROP_EVENT_ID, "battery-caution",
                                  /* TRANSLATORS: this is the sound description */
                                  CA_PROP_EVENT_DESCRIPTION, _("Battery is critically low"), NULL);
@@ -949,6 +952,7 @@ engine_charge_action (GsdPowerManager *manager, UpDevice *device)
         GsdPowerActionType policy;
         guint timer_id;
         UpDeviceKind kind;
+        ca_context *ca_context;
 
         /* get device properties */
         g_object_get (device,
@@ -1014,8 +1018,10 @@ engine_charge_action (GsdPowerManager *manager, UpDevice *device)
         /* try to show */
         notify_notification_show (manager->notification_low, NULL);
 
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         /* play the sound, using sounds from the naming spec */
-        ca_context_play (ca_gtk_context_get (), 0,
+        ca_context_play (ca_context, 0,
                          CA_PROP_EVENT_ID, "battery-caution",
                          /* TRANSLATORS: this is the sound description */
                          CA_PROP_EVENT_DESCRIPTION, _("Battery is critically low"), NULL);
@@ -1029,6 +1035,7 @@ engine_device_warning_changed_cb (UpDevice *device, GParamSpec *pspec, GsdPowerM
         g_autofree char *serial = NULL;
         UpDeviceLevel warning;
         UpDeviceKind kind;
+        ca_context *ca_context;
 
         g_object_get (device,
                       "serial", &serial,
@@ -1055,7 +1062,8 @@ engine_device_warning_changed_cb (UpDevice *device, GParamSpec *pspec, GsdPowerM
                 /* FIXME: this only handles one notification
                  * for the whole system, instead of one per device */
                 g_debug ("fully charged or charging, hiding notifications if any");
-                play_loop_stop (&manager->critical_alert_timeout_id);
+                ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+                play_loop_stop (ca_context, &manager->critical_alert_timeout_id);
                 if (kind != UP_DEVICE_KIND_UPS)
                         notify_close_if_showing (&manager->notification_low);
                 else
@@ -1499,8 +1507,12 @@ restart_inhibit_lid_switch_timer (GsdPowerManager *manager)
 static void
 do_lid_open_action (GsdPowerManager *manager)
 {
+        ca_context *ca_context;
+
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         /* play a sound, using sounds from the naming spec */
-        ca_context_play (ca_gtk_context_get (), 0,
+        ca_context_play (ca_context, 0,
                          CA_PROP_EVENT_ID, "lid-open",
                          /* TRANSLATORS: this is the sound description */
                          CA_PROP_EVENT_DESCRIPTION, _("Lid has been opened"),
@@ -1533,8 +1545,12 @@ lock_screensaver (GsdPowerManager *manager)
 static void
 do_lid_closed_action (GsdPowerManager *manager)
 {
+        ca_context *ca_context;
+
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         /* play a sound, using sounds from the naming spec */
-        ca_context_play (ca_gtk_context_get (), 0,
+        ca_context_play (ca_context, 0,
                          CA_PROP_EVENT_ID, "lid-close",
                          /* TRANSLATORS: this is the sound description */
                          CA_PROP_EVENT_DESCRIPTION, _("Lid has been closed"),
@@ -2187,13 +2203,17 @@ up_client_on_battery_cb (UpClient *client,
                          GParamSpec *pspec,
                          GsdPowerManager *manager)
 {
+        ca_context *ca_context;
+
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         if (up_client_get_on_battery (manager->up_client)) {
-                ca_context_play (ca_gtk_context_get (), 0,
+                ca_context_play (ca_context, 0,
                                  CA_PROP_EVENT_ID, "power-unplug",
                                  /* TRANSLATORS: this is the sound description */
                                  CA_PROP_EVENT_DESCRIPTION, _("On battery power"), NULL);
         } else {
-                ca_context_play (ca_gtk_context_get (), 0,
+                ca_context_play (ca_context, 0,
                                  CA_PROP_EVENT_ID, "power-plug",
                                  /* TRANSLATORS: this is the sound description */
                                  CA_PROP_EVENT_DESCRIPTION, _("On AC power"), NULL);
@@ -3119,9 +3139,6 @@ gsd_power_manager_startup (GApplication *app)
         /* ensure the default dpms timeouts are cleared */
         backlight_enable (manager);
 
-        if (!gnome_settings_is_wayland ())
-                manager->xscreensaver_watchdog_timer_id = gsd_power_enable_screensaver_watchdog ();
-
         /* queue a signal in case the proxy from gnome-shell was created before we got here
            (likely, considering that to get here we need a reply from gnome-shell)
         */
@@ -3142,6 +3159,7 @@ static void
 gsd_power_manager_shutdown (GApplication *app)
 {
         GsdPowerManager *manager = GSD_POWER_MANAGER (app);
+        ca_context *ca_context;
 
         g_debug ("Stopping power manager");
 
@@ -3193,15 +3211,11 @@ gsd_power_manager_shutdown (GApplication *app)
         disable_power_saver (manager);
         g_clear_object (&manager->power_profiles_proxy);
 
-        play_loop_stop (&manager->critical_alert_timeout_id);
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+        play_loop_stop (ca_context, &manager->critical_alert_timeout_id);
 
         g_clear_object (&manager->idle_monitor);
         g_clear_object (&manager->upower_kbd_proxy);
-
-        if (manager->xscreensaver_watchdog_timer_id > 0) {
-                g_source_remove (manager->xscreensaver_watchdog_timer_id);
-                manager->xscreensaver_watchdog_timer_id = 0;
-        }
 
         g_clear_handle_id (&manager->iio_proxy_watch_id, g_bus_unwatch_name);
 
