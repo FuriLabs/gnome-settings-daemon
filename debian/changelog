@@ -1,3 +1,9 @@
+gnome-settings-daemon (49~alpha.1-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 07 Jul 2025 17:38:30 +0200
+
 gnome-settings-daemon (48.1-1ubuntu1) questing; urgency=medium
 
   * Merge with Debian unstable (LP: #2112003). Remaining changes:
