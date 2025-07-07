@@ -9,7 +9,7 @@ Subject: keyboard: sync input sources to accountsservice
  3 files changed, 88 insertions(+)
 
 diff --git a/meson.build b/meson.build
-index db8bd64..3dd4799 100644
+index 671afcf..0390c76 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -94,6 +94,7 @@ endif
@@ -21,19 +21,19 @@ index db8bd64..3dd4799 100644
  geocode_glib_dep = dependency('geocode-glib-2.0', version: '>= 3.26.3', required: false)
  if not geocode_glib_dep.found()
 diff --git a/plugins/xsettings/gsd-xsettings-manager.c b/plugins/xsettings/gsd-xsettings-manager.c
-index fcc1d9d..7cbc809 100644
+index 2a90e09..c9b59a0 100644
 --- a/plugins/xsettings/gsd-xsettings-manager.c
 +++ b/plugins/xsettings/gsd-xsettings-manager.c
-@@ -38,6 +38,8 @@
- #include <gdk/gdkx.h>
- #include <gtk/gtk.h>
+@@ -35,6 +35,8 @@
+ #include <glib/gi18n.h>
+ #include <gdesktop-enums.h>
  
 +#include <act/act.h>
 +
  #include "gnome-settings-profile.h"
  #include "gnome-settings-daemon/gsd-enums.h"
  #include "gsd-xsettings-manager.h"
-@@ -58,6 +60,7 @@
+@@ -54,6 +56,7 @@
  #define WM_SETTINGS_SCHEMA        "org.gnome.desktop.wm.preferences"
  #define A11Y_SCHEMA               "org.gnome.desktop.a11y"
  #define A11Y_INTERFACE_SCHEMA     "org.gnome.desktop.a11y.interface"
@@ -41,7 +41,7 @@ index fcc1d9d..7cbc809 100644
  #define CLASSIC_WM_SETTINGS_SCHEMA "org.gnome.shell.extensions.classic-overrides"
  
  #define XSETTINGS_PLUGIN_SCHEMA "org.gnome.settings-daemon.plugins.xsettings"
-@@ -76,6 +79,7 @@
+@@ -72,6 +75,7 @@
  
  #define HIGH_CONTRAST_KEY "high-contrast"
  
@@ -49,15 +49,15 @@ index fcc1d9d..7cbc809 100644
  #define GTK_IM_MODULE_KEY      "gtk-im-module"
  
  #define GTK_SETTINGS_DBUS_PATH "/org/gtk/Settings"
-@@ -286,6 +290,7 @@ struct _GsdXSettingsManager
+@@ -284,6 +288,7 @@ struct _GsdXSettingsManager
          gint64             fontconfig_timestamp;
  
          GSettings         *interface_settings;
 +        GSettings         *input_sources_settings;
-         GdkSeat           *user_seat;
  
          GsdXSettingsGtk   *gtk;
-@@ -1278,12 +1283,76 @@ migrate_settings (void)
+ 
+@@ -1268,12 +1273,76 @@ migrate_settings (void)
                                      mouse_entries, G_N_ELEMENTS (mouse_entries));
  }
  
@@ -134,7 +134,7 @@ index fcc1d9d..7cbc809 100644
          setting = g_settings_get_string (manager->interface_settings,
                                           GTK_IM_MODULE_KEY);
          if (setting && *setting)
-@@ -1293,6 +1362,18 @@ update_gtk_im_module (GsdXSettingsManager *manager)
+@@ -1283,6 +1352,18 @@ update_gtk_im_module (GsdXSettingsManager *manager)
  
          xsettings_manager_set_string (manager->manager, "Gtk/IMModule", module);
          g_free (setting);
@@ -152,8 +152,8 @@ index fcc1d9d..7cbc809 100644
 +                                  manager->input_sources_settings);
  }
  
- static void
-@@ -1362,6 +1443,10 @@ gsd_xsettings_manager_startup (GApplication *app)
+ static gboolean
+@@ -1321,6 +1402,10 @@ gsd_xsettings_manager_startup (GApplication *app)
          g_signal_connect_swapped (manager->interface_settings,
                                    "changed::" GTK_IM_MODULE_KEY,
                                    G_CALLBACK (update_gtk_im_module), manager);
@@ -164,8 +164,8 @@ index fcc1d9d..7cbc809 100644
          update_gtk_im_module (manager);
  
          manager->monitors_changed_id =
-@@ -1574,6 +1659,7 @@ gsd_xsettings_manager_shutdown (GApplication *app)
-                 manager->user_seat = NULL;
+@@ -1521,6 +1606,7 @@ gsd_xsettings_manager_shutdown (GApplication *app)
+                 manager->gtk = NULL;
          }
  
 +        g_clear_object (&manager->input_sources_settings);
@@ -173,7 +173,7 @@ index fcc1d9d..7cbc809 100644
  
          g_clear_handle_id (&manager->start_idle_id, g_source_remove);
 diff --git a/plugins/xsettings/meson.build b/plugins/xsettings/meson.build
-index 2054f63..d90243e 100644
+index 26d9bcc..7430ffe 100644
 --- a/plugins/xsettings/meson.build
 +++ b/plugins/xsettings/meson.build
 @@ -14,6 +14,7 @@ sources = gsd_xsettings_gtk + fc_monitor + wm_button_layout_translation + files(
@@ -182,5 +182,5 @@ index 2054f63..d90243e 100644
  deps = plugins_deps + [
 +  accountsservice_dep,
    gsd_enums_dep,
-   gtk_dep,
+   gio_dep,
    x11_dep,
