@@ -34,7 +34,6 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gio/gio.h>
-#include <gdk/gdk.h>
 #include <gio/gdesktopappinfo.h>
 #include <gio/gunixfdlist.h>
 
@@ -176,7 +175,6 @@ typedef struct
         /* Power stuff */
         GSettings       *power_settings;
         GDBusProxy      *power_proxy;
-        GDBusProxy      *power_screen_proxy;
         GDBusProxy      *power_keyboard_proxy;
         UpDevice        *composite_device;
         char            *chassis_type;
@@ -1001,13 +999,12 @@ launch_app (GsdMediaKeysManager *manager,
 	    GAppInfo            *app_info,
 	    gint64               timestamp)
 {
-	GError *error = NULL;
-        GdkAppLaunchContext *launch_context;
+        g_autoptr (GError) error = NULL;
+        g_autoptr (GAppLaunchContext) launch_context = NULL;
 
         /* setup the launch context so the startup notification is correct */
-        launch_context = gdk_display_get_app_launch_context (gdk_display_get_default ());
-        gdk_app_launch_context_set_timestamp (launch_context, timestamp);
-        set_launch_context_env (manager, G_APP_LAUNCH_CONTEXT (launch_context));
+        launch_context = g_app_launch_context_new ();
+        set_launch_context_env (manager, launch_context);
 
         g_signal_connect_object (launch_context,
                                  "launched",
@@ -1019,9 +1016,7 @@ launch_app (GsdMediaKeysManager *manager,
 		g_warning ("Could not launch '%s': %s",
 			   g_app_info_get_commandline (app_info),
 			   error->message);
-		g_error_free (error);
 	}
-        g_object_unref (launch_context);
 }
 
 static void
@@ -1279,7 +1274,7 @@ static void
 do_home_key_action (GsdMediaKeysManager *manager,
 		    gint64               timestamp)
 {
-	GdkAppLaunchContext *launch_context;
+	g_autoptr (GAppLaunchContext) launch_context = NULL;
 	g_autoptr (GFile) file = NULL;
 	g_autoptr (GError) error = NULL;
 	g_autofree char *uri;
@@ -1287,10 +1282,9 @@ do_home_key_action (GsdMediaKeysManager *manager,
 	file = g_file_new_for_path (g_get_home_dir ());
 	uri = g_file_get_uri (file);
 
-	launch_context = gdk_display_get_app_launch_context (gdk_display_get_default ());
-	gdk_app_launch_context_set_timestamp (launch_context, timestamp);
+	launch_context = g_app_launch_context_new ();
 
-	if (!g_app_info_launch_default_for_uri (uri, G_APP_LAUNCH_CONTEXT (launch_context), &error))
+	if (!g_app_info_launch_default_for_uri (uri, launch_context, &error))
 		g_warning ("Failed to launch '%s': %s", uri, error->message);
 }
 
@@ -2144,22 +2138,15 @@ update_brightness_cb (GObject             *source_object,
         GVariant *variant;
         GsdMediaKeysManager *manager = GSD_MEDIA_KEYS_MANAGER (user_data);
         GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
-        const char *icon, *debug;
+        const char *icon;
         char *connector = NULL;
-
-        /* update the dialog with the new value */
-        if (G_DBUS_PROXY (source_object) == priv->power_keyboard_proxy) {
-                debug = "keyboard";
-        } else {
-                debug = "screen";
-        }
 
         variant = g_dbus_proxy_call_finish (G_DBUS_PROXY (source_object),
                                         res, &error);
         if (variant == NULL) {
                 if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-                        g_warning ("Failed to set new %s percentage: %s",
-                                   debug, error->message);
+                        g_warning ("Failed to set new keyboard percentage: %s",
+                                   error->message);
                 g_error_free (error);
                 return;
         }
@@ -2192,11 +2179,6 @@ do_brightness_action (GsdMediaKeysManager *manager,
         case KEYBOARD_BRIGHTNESS_TOGGLE_KEY:
                 proxy = priv->power_keyboard_proxy;
                 break;
-        case SCREEN_BRIGHTNESS_UP_KEY:
-        case SCREEN_BRIGHTNESS_DOWN_KEY:
-        case SCREEN_BRIGHTNESS_CYCLE_KEY:
-                proxy = priv->power_screen_proxy;
-                break;
         default:
                 g_assert_not_reached ();
         }
@@ -2209,18 +2191,13 @@ do_brightness_action (GsdMediaKeysManager *manager,
 
         switch (type) {
         case KEYBOARD_BRIGHTNESS_UP_KEY:
-        case SCREEN_BRIGHTNESS_UP_KEY:
                 cmd = "StepUp";
                 break;
         case KEYBOARD_BRIGHTNESS_DOWN_KEY:
-        case SCREEN_BRIGHTNESS_DOWN_KEY:
                 cmd = "StepDown";
                 break;
         case KEYBOARD_BRIGHTNESS_TOGGLE_KEY:
                 cmd = "Toggle";
-                break;
-        case SCREEN_BRIGHTNESS_CYCLE_KEY:
-                cmd = "Cycle";
                 break;
         default:
                 g_assert_not_reached ();
@@ -2532,9 +2509,6 @@ do_action (GsdMediaKeysManager *manager,
         case HIBERNATE_KEY:
                 do_config_power_action (manager, GSD_POWER_ACTION_HIBERNATE, power_action_noninteractive);
                 break;
-        case SCREEN_BRIGHTNESS_UP_KEY:
-        case SCREEN_BRIGHTNESS_DOWN_KEY:
-        case SCREEN_BRIGHTNESS_CYCLE_KEY:
         case KEYBOARD_BRIGHTNESS_UP_KEY:
         case KEYBOARD_BRIGHTNESS_DOWN_KEY:
         case KEYBOARD_BRIGHTNESS_TOGGLE_KEY:
@@ -2578,7 +2552,7 @@ on_accelerator_activated (ShellKeyGrabber     *grabber,
         if (!g_variant_dict_lookup (&dict, "device-node", "s", &device_node))
               device_node = NULL;
         if (!g_variant_dict_lookup (&dict, "timestamp", "u", &timestamp))
-              timestamp = GDK_CURRENT_TIME;
+              timestamp = 0L;
         if (!g_variant_dict_lookup (&dict, "action-mode", "u", &mode))
               mode = 0;
 
@@ -3488,23 +3462,6 @@ power_ready_cb (GObject             *source_object,
 }
 
 static void
-power_screen_ready_cb (GObject             *source_object,
-                       GAsyncResult        *res,
-                       GsdMediaKeysManager *manager)
-{
-        GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
-        GError *error = NULL;
-
-        priv->power_screen_proxy = g_dbus_proxy_new_finish (res, &error);
-        if (priv->power_screen_proxy == NULL) {
-                if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-                        g_warning ("Failed to get proxy for power (screen): %s",
-                                   error->message);
-                g_error_free (error);
-        }
-}
-
-static void
 power_keyboard_ready_cb (GObject             *source_object,
                          GAsyncResult        *res,
                          GsdMediaKeysManager *manager)
@@ -3558,16 +3515,6 @@ gsd_media_keys_manager_dbus_register (GApplication    *app,
                           NULL,
                           GSD_DBUS_NAME ".Power",
                           GSD_DBUS_PATH "/Power",
-                          GSD_DBUS_BASE_INTERFACE ".Power.Screen",
-                          NULL,
-                          (GAsyncReadyCallback) power_screen_ready_cb,
-                          manager);
-
-        g_dbus_proxy_new (connection,
-                          G_DBUS_PROXY_FLAGS_NONE,
-                          NULL,
-                          GSD_DBUS_NAME ".Power",
-                          GSD_DBUS_PATH "/Power",
                           GSD_DBUS_BASE_INTERFACE ".Power.Keyboard",
                           NULL,
                           (GAsyncReadyCallback) power_keyboard_ready_cb,
@@ -3594,7 +3541,6 @@ gsd_media_keys_manager_dbus_unregister (GApplication    *app,
         }
 
         g_clear_object (&priv->power_proxy);
-        g_clear_object (&priv->power_screen_proxy);
         g_clear_object (&priv->power_keyboard_proxy);
         g_clear_object (&priv->composite_device);
 
