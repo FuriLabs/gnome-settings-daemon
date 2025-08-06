@@ -10,7 +10,7 @@ Subject: media-keys: restore terminal keyboard shortcut schema
  4 files changed, 32 insertions(+)
 
 diff --git a/data/org.gnome.settings-daemon.plugins.media-keys.gschema.xml.in b/data/org.gnome.settings-daemon.plugins.media-keys.gschema.xml.in
-index f99d69a..255d369 100644
+index 713ea72..61cd444 100644
 --- a/data/org.gnome.settings-daemon.plugins.media-keys.gschema.xml.in
 +++ b/data/org.gnome.settings-daemon.plugins.media-keys.gschema.xml.in
 @@ -96,6 +96,11 @@
@@ -38,10 +38,10 @@ index f99d69a..255d369 100644
        <default>['']</default>
        <summary>Launch web browser</summary>
 diff --git a/plugins/media-keys/gsd-media-keys-manager.c b/plugins/media-keys/gsd-media-keys-manager.c
-index 2811114..72da12b 100644
+index 322f47a..0a5b509 100644
 --- a/plugins/media-keys/gsd-media-keys-manager.c
 +++ b/plugins/media-keys/gsd-media-keys-manager.c
-@@ -1188,6 +1188,22 @@ gnome_session_shutdown_cb (GObject *source_object,
+@@ -1183,6 +1183,22 @@ gnome_session_shutdown_cb (GObject *source_object,
          }
  }
  
@@ -64,7 +64,7 @@ index 2811114..72da12b 100644
  static void
  gnome_session_shutdown (GsdMediaKeysManager *manager)
  {
-@@ -2470,6 +2486,9 @@ do_action (GsdMediaKeysManager *manager,
+@@ -2447,6 +2463,9 @@ do_action (GsdMediaKeysManager *manager,
          case HELP_KEY:
                  do_url_action (manager, "ghelp", timestamp);
                  break;
@@ -74,7 +74,7 @@ index 2811114..72da12b 100644
          case WWW_KEY:
                  do_url_action (manager, "http", timestamp);
                  break;
-@@ -3041,6 +3060,7 @@ migrate_keybinding_settings (void)
+@@ -3015,6 +3034,7 @@ migrate_keybinding_settings (void)
                  { "volume-mute",                "volume-mute",                  map_keybinding },
                  { "volume-up",                  "volume-up",                    map_keybinding },
                  { "mic-mute",                   "mic-mute",                     map_keybinding },
@@ -83,7 +83,7 @@ index 2811114..72da12b 100644
                  { "magnifier",                  "magnifier",                    map_keybinding },
                  { "screenreader",               "screenreader",                 map_keybinding },
 diff --git a/plugins/media-keys/media-keys.h b/plugins/media-keys/media-keys.h
-index e8690e2..4f9be01 100644
+index a8aa189..981af6f 100644
 --- a/plugins/media-keys/media-keys.h
 +++ b/plugins/media-keys/media-keys.h
 @@ -44,6 +44,7 @@ typedef enum {
@@ -95,7 +95,7 @@ index e8690e2..4f9be01 100644
          PLAY_KEY,
          PAUSE_KEY,
 diff --git a/plugins/media-keys/shortcuts-list.h b/plugins/media-keys/shortcuts-list.h
-index c4c6404..366afe6 100644
+index 74e9a06..7405f8d 100644
 --- a/plugins/media-keys/shortcuts-list.h
 +++ b/plugins/media-keys/shortcuts-list.h
 @@ -68,6 +68,7 @@ static struct {
