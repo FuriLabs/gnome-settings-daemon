@@ -1,9 +1,13 @@
 gnome-settings-daemon (49~beta-1) UNRELEASED; urgency=medium
 
+  [ Daniel van Vugt ]
   * New upstream release 49.beta
   * Add patch power-test-Disable-known-broken-test.patch to work around
     a known test failure regression introduced upstream in 49.beta.
   * Remove now empty directory: usr/share/polkit-1
+
+  [ Alessandro Astone ]
+  * debian/control: Add Breaks for dropping org.gnome.SettingsDaemon.Wacom
 
  -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 06 Aug 2025 14:29:05 +0800
 
