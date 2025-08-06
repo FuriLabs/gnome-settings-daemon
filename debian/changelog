@@ -1,10 +1,15 @@
-gnome-settings-daemon (49~alpha.1-0ubuntu1) UNRELEASED; urgency=medium
+gnome-settings-daemon (49~beta-0ubuntu1) UNRELEASED; urgency=medium
 
-  * New upstream release
-  * Rebase patches
+  [ Daniel van Vugt ]
+  * New upstream release 49.beta
+  * Add patch power-test-Disable-known-broken-test.patch to work around
+    a known test failure regression introduced upstream in 49.beta.
+  * Remove now empty directory: usr/share/polkit-1
+
+  [ Alessandro Astone ]
   * debian/control: Add Breaks for dropping org.gnome.SettingsDaemon.Wacom
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 07 Jul 2025 17:47:43 +0200
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 06 Aug 2025 16:10:20 +0800
 
 gnome-settings-daemon (48.1-1ubuntu1) questing; urgency=medium
 
