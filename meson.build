@@ -1,6 +1,6 @@
 project(
   'gnome-settings-daemon', 'c',
-  version: '49.alpha.1',
+  version: '49.beta',
   license: [ 'GPL2+', 'LGPLv2+' ],
   meson_version: '>= 0.64.0'
 )
@@ -103,7 +103,6 @@ gio_dep = dependency('gio-2.0', version: '>= 2.53.0')
 gio_unix_dep = dependency('gio-unix-2.0')
 gnome_desktop_dep = dependency('gnome-desktop-4')
 gsettings_desktop_dep = dependency('gsettings-desktop-schemas', version: '>= 46.beta')
-gtk_dep = dependency('gtk4')
 gweather_dep = dependency('gweather4')
 libcanberra_dep = dependency('libcanberra')
 libgeoclue_dep = dependency('libgeoclue-2.0', version: '>= 2.3.1')
@@ -189,6 +188,13 @@ if enable_cups
     compile_args: cups_cflags
   )
   '''
+
+  if cc.has_header('langinfo.h')
+    foreach nl_enum: [ '_NL_PAPER_HEIGHT',
+                       '_NL_PAPER_WIDTH' ]
+      config_h.set('HAVE_' + nl_enum, cc.has_header_symbol('langinfo.h', nl_enum))
+    endforeach
+  endif
 endif
 
 # Rfkill
@@ -230,6 +236,9 @@ enable_colord = get_option('colord')
 if enable_colord
   colord_dep = dependency('colord', version: '>= 1.4.5')
 endif
+
+enable_xwayland = get_option('xwayland')
+enable_x11 = get_option('x11')
 
 gnome = import('gnome')
 i18n = import('i18n')
