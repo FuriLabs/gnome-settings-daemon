@@ -12,7 +12,6 @@ all_plugins = [
     ['usb-protection', 'UsbProtection', 'GNOME USB protection'],
     ['xsettings', 'XSettings', 'GNOME XSettings'],
     ['smartcard', 'Smartcard', 'GNOME smartcard'],
-    ['wacom', 'Wacom', 'GNOME Wacom tablet support'],
     ['print-notifications', 'PrintNotifications', 'GNOME printer notifications'],
     ['rfkill', 'Rfkill', 'GNOME RFKill support'],
     ['wwan', 'Wwan', 'GNOME WWan support'],
@@ -20,16 +19,16 @@ all_plugins = [
 
 disabled_plugins = []
 
+if not enable_xwayland and not enable_x11
+    disabled_plugins += ['xsettings']
+endif
+
 if not enable_smartcard
     disabled_plugins += ['smartcard']
 endif
 
 if not enable_usb_protection
     disabled_plugins += ['usb-protection']
-endif
-
-if not enable_wacom
-    disabled_plugins += ['wacom']
 endif
 
 if not enable_cups
@@ -59,14 +58,13 @@ plugin_gate_units = {
       ['gnome-session-x11-services.target', 'after'],
       ['gnome-session-x11-services-ready.target', 'before'],
     ],
-#    'wacom': [['wacom.target']],
 #    'smartcard': [['smartcard.target']],
 }
 
 plugins_conf = configuration_data()
 plugins_conf.set('libexecdir', gsd_libexecdir)
 
-plugins_deps = [libgsd_dep]
+plugins_deps = [libgsd_dep, libcanberra_dep]
 
 plugins_cflags = ['-DGNOME_SETTINGS_LOCALEDIR="@0@"'.format(gsd_localedir)]
 

@@ -11,7 +11,6 @@ sources += main_helper_sources
 
 deps = plugins_deps + [
   colord_dep,
-  libcanberra_gtk_dep,
   libgeoclue_dep,
   libnotify_dep,
   libcommon_dep,
@@ -19,7 +18,6 @@ deps = plugins_deps + [
 ]
 
 cflags += ['-DBINDIR="@0@"'.format(gsd_bindir)]
-cflags += ['-DUSE_GTK=1']
 
 executable(
   'gsd-' + plugin_name,
