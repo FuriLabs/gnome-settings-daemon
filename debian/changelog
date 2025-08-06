@@ -1,3 +1,9 @@
+gnome-settings-daemon (49~beta-1) UNRELEASED; urgency=medium
+
+  * New upstream release 49.beta
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 06 Aug 2025 14:29:05 +0800
+
 gnome-settings-daemon (48.1-1) unstable; urgency=medium
 
   * New upstream release (LP: #2105397)
