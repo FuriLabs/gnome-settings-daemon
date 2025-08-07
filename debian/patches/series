@@ -1,3 +1,2 @@
 debian/01_debianize_xrdb.patch
 debian/power-test-Disable-known-broken-test.patch
-debian/meson.build-Drop-pango-dependency.patch
