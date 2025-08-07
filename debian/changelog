@@ -1,4 +1,4 @@
-gnome-settings-daemon (49~beta-0ubuntu1) UNRELEASED; urgency=medium
+gnome-settings-daemon (49~beta-0ubuntu1) questing; urgency=medium
 
   [ Daniel van Vugt ]
   * New upstream release 49.beta
