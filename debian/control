@@ -37,7 +37,6 @@ Build-Depends: debhelper-compat (= 13),
                libpulse-dev,
                libsystemd-dev [linux-any],
                libupower-glib-dev (>= 0.99.12),
-               libwacom-dev [!hurd-any !s390 !s390x],
                libx11-dev,
                libxext-dev,
                libxfixes-dev (>= 1:6.0),
@@ -48,7 +47,6 @@ Build-Depends: debhelper-compat (= 13),
                python3-gi <!nocheck>,
                systemd-dev [linux-any],
                xkb-data,
-               xserver-xorg-input-wacom [!hurd-any !s390 !s390x],
 Standards-Version: 4.7.0
 Homepage: https://gitlab.gnome.org/GNOME/gnome-settings-daemon
 Vcs-Git: https://salsa.debian.org/gnome-team/gnome-settings-daemon.git
