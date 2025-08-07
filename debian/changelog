@@ -7,6 +7,7 @@ gnome-settings-daemon (49~beta-0ubuntu1) questing; urgency=medium
     - Drop build-depends on wacom packages
     - Bump requirement to gnome-desktop-4
     - The libcanberra-gtk3 build dep changed to libcanberra
+    - Add python3-dbusmock build/test dependency
   * Refresh patches:
     - keyboard-sync-input-sources-to-accountsservice.patch
     - media-keys-restore-terminal-keyboard-shortcut-schema.patch
