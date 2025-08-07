@@ -8,10 +8,10 @@ It's not used and won't get pulled in automatically since GTK was removed.
  1 file changed, 1 deletion(-)
 
 diff --git a/meson.build b/meson.build
-index 79971fb..fa0f71c 100644
+index 5fcf2d8..ba62d9c 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -109,7 +109,6 @@ libcanberra_dep = dependency('libcanberra')
+@@ -108,7 +108,6 @@ libcanberra_dep = dependency('libcanberra')
  libgeoclue_dep = dependency('libgeoclue-2.0', version: '>= 2.3.1')
  libnotify_dep = dependency('libnotify', version: '>= 0.7.3')
  libpulse_mainloop_glib_dep = dependency('libpulse-mainloop-glib', version: '>= 2.0')
