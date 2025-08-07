@@ -16,6 +16,7 @@ gnome-settings-daemon (49~beta-0ubuntu1) questing; urgency=medium
   * Add patches:
     - power-test-Disable-known-broken-test.patch
     - gsd-donation-reminder-Disable-for-Ubuntu-sessions.patch
+    - meson.build-Drop-pango-dependency.patch
 
   [ Alessandro Astone ]
   * debian/control: Add Breaks for dropping org.gnome.SettingsDaemon.Wacom
