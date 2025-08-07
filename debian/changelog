@@ -5,6 +5,12 @@ gnome-settings-daemon (49~beta-0ubuntu1) UNRELEASED; urgency=medium
   * Add patch power-test-Disable-known-broken-test.patch to work around
     a known test failure regression introduced upstream in 49.beta.
   * Remove now empty directory: usr/share/polkit-1
+  * Build dependency changes:
+    - Drop build-depends on wacom packages
+    - Drop X11 dependencies (it's disabled by default and won't come back)
+    - GTK support was dropped (providing X11 is disabled), but keep GIO.
+    - Bump requirement to gnome-desktop-4
+    - The libcanberra-gtk3 build dep changed to libcanberra
   * Refresh debian/patches/ubuntu/:
     - keyboard-sync-input-sources-to-accountsservice.patch
     - media-keys-restore-terminal-keyboard-shortcut-schema.patch
