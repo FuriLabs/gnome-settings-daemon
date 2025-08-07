@@ -19,6 +19,7 @@ gnome-settings-daemon (49~beta-0ubuntu1) UNRELEASED; urgency=medium
 
   [ Alessandro Astone ]
   * debian/control: Add Breaks for dropping org.gnome.SettingsDaemon.Wacom
+  * debian/watch: Look for alpha releases
 
  -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 06 Aug 2025 16:10:20 +0800
 
