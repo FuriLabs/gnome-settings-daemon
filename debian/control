@@ -67,6 +67,7 @@ Depends: default-logind [linux-any] | logind [linux-any],
 Recommends: iio-sensor-proxy,
             pipewire-audio,
             pkexec,
+            systemd-oomd,
             x11-xserver-utils
 Suggests: usbguard
 Breaks: gnome-shell (<< 47~rc),
