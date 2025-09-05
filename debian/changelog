@@ -1,3 +1,9 @@
+gnome-settings-daemon (49~rc-0ubuntu1) UNRELEASED; urgency=medium
+
+  * New upstream release 49.rc
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 05 Sep 2025 15:19:56 +0200
+
 gnome-settings-daemon (49~beta-0ubuntu1) questing; urgency=medium
 
   [ Daniel van Vugt ]
