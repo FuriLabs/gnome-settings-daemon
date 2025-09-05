@@ -1,6 +1,6 @@
 project(
   'gnome-settings-daemon', 'c',
-  version: '49.beta',
+  version: '49.rc',
   license: [ 'GPL2+', 'LGPLv2+' ],
   meson_version: '>= 0.64.0'
 )
@@ -36,8 +36,6 @@ gsd_pkgincludedir = join_paths(gsd_includedir, gsd_api_name)
 gsd_pkglibdir = join_paths(gsd_libdir, gsd_api_name)
 
 gsd_schemadir = join_paths(gsd_datadir, 'glib-2.0', 'schemas')
-
-gsd_xdg_autostart = join_paths(gsd_sysconfdir, 'xdg', 'autostart')
 
 gsd_3_0_api_name = '@0@-@1@'.format(meson.project_name(), '3.0')
 gsd_gtk_modules_directory = join_paths(gsd_libdir, gsd_3_0_api_name, 'gtk-modules')
@@ -108,7 +106,6 @@ libcanberra_dep = dependency('libcanberra')
 libgeoclue_dep = dependency('libgeoclue-2.0', version: '>= 2.3.1')
 libnotify_dep = dependency('libnotify', version: '>= 0.7.3')
 libpulse_mainloop_glib_dep = dependency('libpulse-mainloop-glib', version: '>= 2.0')
-pango_dep = dependency('pango', version: '>= 1.20.0')
 polkit_gobject_dep = dependency('polkit-gobject-1', version: '>= 0.114')
 upower_glib_dep = dependency('upower-glib', version: '>= 0.99.12')
 x11_dep = dependency('x11')
