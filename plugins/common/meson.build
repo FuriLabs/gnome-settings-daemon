@@ -1,7 +1,6 @@
 common_inc = include_directories('.')
 
 sources = files(
-  'gsd-input-helper.c',
   'gsd-settings-migrate.c',
   'gsd-shell-helper.c'
 )
@@ -10,23 +9,6 @@ main_helper_sources = files(
   'gsd-application.c',
   'gsd-main-helper.c',
 )
-
-resource_data = files('gtk.css')
-
-sources += gnome.compile_resources(
-  'gsd-resources',
-  'gsd.gresources.xml',
-  c_name: 'gsd',
-  dependencies: resource_data
-)
-
-deps = plugins_deps + [
-  gnome_desktop_dep,
-  gtk_x11_dep,
-  x11_dep,
-  dependency('kbproto'),
-  dependency('xi')
-]
 
 ldflags = []
 if host_is_darwin
@@ -37,12 +19,12 @@ libcommon = static_library(
   plugin_name,
   sources: sources,
   include_directories: top_inc,
-  dependencies: deps,
+  dependencies: [libgsd_dep, gio_dep],
   c_args: cflags,
   link_args: ldflags
 )
 
 libcommon_dep = declare_dependency(
   include_directories: common_inc,
-  link_with: libcommon
+  link_with: libcommon,
 )

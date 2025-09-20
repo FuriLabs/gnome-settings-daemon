@@ -34,8 +34,6 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gio/gio.h>
-#include <gdk/gdk.h>
-#include <gtk/gtk.h>
 #include <gio/gdesktopappinfo.h>
 #include <gio/gunixfdlist.h>
 
@@ -58,7 +56,6 @@
 
 #include "shortcuts-list.h"
 #include "shell-key-grabber.h"
-#include "gsd-input-helper.h"
 #include "gnome-settings-daemon/gsd-enums.h"
 #include "gsd-shell-helper.h"
 
@@ -153,10 +150,8 @@ typedef struct
         GvcMixerControl *volume;
         GvcMixerStream  *sink;
         GvcMixerStream  *source;
-        ca_context      *ca;
         GSettings       *sound_settings;
         pa_volume_t      max_volume;
-        GtkSettings     *gtksettings;
 #if HAVE_GUDEV
         GHashTable      *streams; /* key = X device ID, value = stream id */
         GUdevClient     *udev_client;
@@ -180,7 +175,6 @@ typedef struct
         /* Power stuff */
         GSettings       *power_settings;
         GDBusProxy      *power_proxy;
-        GDBusProxy      *power_screen_proxy;
         GDBusProxy      *power_keyboard_proxy;
         UpDevice        *composite_device;
         char            *chassis_type;
@@ -1005,13 +999,12 @@ launch_app (GsdMediaKeysManager *manager,
 	    GAppInfo            *app_info,
 	    gint64               timestamp)
 {
-	GError *error = NULL;
-        GdkAppLaunchContext *launch_context;
+        g_autoptr (GError) error = NULL;
+        g_autoptr (GAppLaunchContext) launch_context = NULL;
 
         /* setup the launch context so the startup notification is correct */
-        launch_context = gdk_display_get_app_launch_context (gdk_display_get_default ());
-        gdk_app_launch_context_set_timestamp (launch_context, timestamp);
-        set_launch_context_env (manager, G_APP_LAUNCH_CONTEXT (launch_context));
+        launch_context = g_app_launch_context_new ();
+        set_launch_context_env (manager, launch_context);
 
         g_signal_connect_object (launch_context,
                                  "launched",
@@ -1023,9 +1016,7 @@ launch_app (GsdMediaKeysManager *manager,
 		g_warning ("Could not launch '%s': %s",
 			   g_app_info_get_commandline (app_info),
 			   error->message);
-		g_error_free (error);
 	}
-        g_object_unref (launch_context);
 }
 
 static void
@@ -1283,19 +1274,18 @@ static void
 do_home_key_action (GsdMediaKeysManager *manager,
 		    gint64               timestamp)
 {
-	GFile *file;
-	GError *error = NULL;
-	char *uri;
+	g_autoptr (GAppLaunchContext) launch_context = NULL;
+	g_autoptr (GFile) file = NULL;
+	g_autoptr (GError) error = NULL;
+	g_autofree char *uri;
 
 	file = g_file_new_for_path (g_get_home_dir ());
 	uri = g_file_get_uri (file);
-	g_object_unref (file);
 
-	if (gtk_show_uri_on_window (NULL, uri, timestamp, &error) == FALSE) {
+	launch_context = g_app_launch_context_new ();
+
+	if (!g_app_info_launch_default_for_uri (uri, launch_context, &error))
 		g_warning ("Failed to launch '%s': %s", uri, error->message);
-		g_error_free (error);
-	}
-	g_free (uri);
 }
 
 static void
@@ -1390,18 +1380,6 @@ do_lock_screensaver (GsdMediaKeysManager *manager)
 }
 
 static void
-sound_theme_changed (GsdMediaKeysManager *manager)
-{
-        GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
-        char *theme_name;
-
-        g_object_get (G_OBJECT (priv->gtksettings), "gtk-sound-theme-name", &theme_name, NULL);
-        if (theme_name)
-                ca_context_change_props (priv->ca, CA_PROP_CANBERRA_XDG_THEME_NAME, theme_name, NULL);
-        g_free (theme_name);
-}
-
-static void
 allow_volume_above_100_percent_changed_cb (GSettings           *settings,
                                            const char          *settings_key,
                                            GsdMediaKeysManager *manager)
@@ -1419,29 +1397,13 @@ static void
 play_volume_changed_audio (GsdMediaKeysManager *manager,
                            GvcMixerStream      *stream)
 {
-	GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
+        ca_context *ca_context;
 
-	if (priv->ca == NULL) {
-                ca_context_create (&priv->ca);
-                ca_context_set_driver (priv->ca, "pulse");
-                ca_context_change_props (priv->ca, 0,
-                                         CA_PROP_APPLICATION_ID,
-                                         "org.gnome.VolumeControl",
-                                         NULL);
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
 
-                priv->gtksettings =
-                        gtk_settings_get_for_screen (gdk_screen_get_default ());
-
-                g_signal_connect_swapped (priv->gtksettings,
-                                          "notify::gtk-sound-theme-name",
-                                          G_CALLBACK (sound_theme_changed),
-                                          manager);
-                sound_theme_changed (manager);
-        }
-
-        ca_context_change_device (priv->ca,
+        ca_context_change_device (ca_context,
                                   gvc_mixer_stream_get_name (stream));
-        ca_context_play (priv->ca, 1,
+        ca_context_play (ca_context, 1,
                          CA_PROP_EVENT_ID, "audio-volume-change",
                          CA_PROP_EVENT_DESCRIPTION, "volume changed through key press",
                          CA_PROP_CANBERRA_CACHE_CONTROL, "permanent",
@@ -1463,6 +1425,7 @@ show_volume_osd (GsdMediaKeysManager *manager,
         gboolean playing = FALSE;
         double new_vol;
         double max_volume;
+        ca_context *ca_context;
 
         max_volume = (double) priv->max_volume / PA_VOLUME_NORM;
         if (!muted) {
@@ -1487,8 +1450,8 @@ show_volume_osd (GsdMediaKeysManager *manager,
                 show_osd_with_max_level (manager, icon, NULL, new_vol, max_volume, NULL);
         }
 
-        if (priv->ca)
-                ca_context_playing (priv->ca, 1, &playing);
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+        ca_context_playing (ca_context, 1, &playing);
         playing = !playing && gvc_mixer_stream_get_state (stream) == GVC_STREAM_STATE_RUNNING;
 
         if (quiet == FALSE && sound_changed != FALSE && muted == FALSE && playing == FALSE)
@@ -2175,22 +2138,15 @@ update_brightness_cb (GObject             *source_object,
         GVariant *variant;
         GsdMediaKeysManager *manager = GSD_MEDIA_KEYS_MANAGER (user_data);
         GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
-        const char *icon, *debug;
+        const char *icon;
         char *connector = NULL;
-
-        /* update the dialog with the new value */
-        if (G_DBUS_PROXY (source_object) == priv->power_keyboard_proxy) {
-                debug = "keyboard";
-        } else {
-                debug = "screen";
-        }
 
         variant = g_dbus_proxy_call_finish (G_DBUS_PROXY (source_object),
                                         res, &error);
         if (variant == NULL) {
                 if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-                        g_warning ("Failed to set new %s percentage: %s",
-                                   debug, error->message);
+                        g_warning ("Failed to set new keyboard percentage: %s",
+                                   error->message);
                 g_error_free (error);
                 return;
         }
@@ -2223,11 +2179,6 @@ do_brightness_action (GsdMediaKeysManager *manager,
         case KEYBOARD_BRIGHTNESS_TOGGLE_KEY:
                 proxy = priv->power_keyboard_proxy;
                 break;
-        case SCREEN_BRIGHTNESS_UP_KEY:
-        case SCREEN_BRIGHTNESS_DOWN_KEY:
-        case SCREEN_BRIGHTNESS_CYCLE_KEY:
-                proxy = priv->power_screen_proxy;
-                break;
         default:
                 g_assert_not_reached ();
         }
@@ -2240,18 +2191,13 @@ do_brightness_action (GsdMediaKeysManager *manager,
 
         switch (type) {
         case KEYBOARD_BRIGHTNESS_UP_KEY:
-        case SCREEN_BRIGHTNESS_UP_KEY:
                 cmd = "StepUp";
                 break;
         case KEYBOARD_BRIGHTNESS_DOWN_KEY:
-        case SCREEN_BRIGHTNESS_DOWN_KEY:
                 cmd = "StepDown";
                 break;
         case KEYBOARD_BRIGHTNESS_TOGGLE_KEY:
                 cmd = "Toggle";
-                break;
-        case SCREEN_BRIGHTNESS_CYCLE_KEY:
-                cmd = "Cycle";
                 break;
         default:
                 g_assert_not_reached ();
@@ -2563,9 +2509,6 @@ do_action (GsdMediaKeysManager *manager,
         case HIBERNATE_KEY:
                 do_config_power_action (manager, GSD_POWER_ACTION_HIBERNATE, power_action_noninteractive);
                 break;
-        case SCREEN_BRIGHTNESS_UP_KEY:
-        case SCREEN_BRIGHTNESS_DOWN_KEY:
-        case SCREEN_BRIGHTNESS_CYCLE_KEY:
         case KEYBOARD_BRIGHTNESS_UP_KEY:
         case KEYBOARD_BRIGHTNESS_DOWN_KEY:
         case KEYBOARD_BRIGHTNESS_TOGGLE_KEY:
@@ -2609,12 +2552,9 @@ on_accelerator_activated (ShellKeyGrabber     *grabber,
         if (!g_variant_dict_lookup (&dict, "device-node", "s", &device_node))
               device_node = NULL;
         if (!g_variant_dict_lookup (&dict, "timestamp", "u", &timestamp))
-              timestamp = GDK_CURRENT_TIME;
+              timestamp = 0L;
         if (!g_variant_dict_lookup (&dict, "action-mode", "u", &mode))
               mode = 0;
-
-	if (!device_node && !gnome_settings_is_wayland ())
-              device_node = xdevice_get_device_node (deviceid);
 
         g_debug ("Received accel id %u (device-id: %u, timestamp: %u, mode: 0x%X)",
                  accel_id, deviceid, timestamp, mode);
@@ -3130,11 +3070,6 @@ gsd_media_keys_manager_shutdown (GApplication *app)
                 priv->start_idle_id = 0;
         }
 
-        if (priv->gtksettings != NULL) {
-                g_signal_handlers_disconnect_by_func (priv->gtksettings, sound_theme_changed, manager);
-                priv->gtksettings = NULL;
-        }
-
         if (priv->rfkill_watch_id > 0) {
                 g_bus_unwatch_name (priv->rfkill_watch_id);
                 priv->rfkill_watch_id = 0;
@@ -3155,8 +3090,6 @@ gsd_media_keys_manager_shutdown (GApplication *app)
                 g_source_remove (priv->reenable_power_button_timer_id);
                 priv->reenable_power_button_timer_id = 0;
         }
-
-        g_clear_pointer (&priv->ca, ca_context_destroy);
 
 #if HAVE_GUDEV
         g_clear_pointer (&priv->streams, g_hash_table_destroy);
@@ -3529,23 +3462,6 @@ power_ready_cb (GObject             *source_object,
 }
 
 static void
-power_screen_ready_cb (GObject             *source_object,
-                       GAsyncResult        *res,
-                       GsdMediaKeysManager *manager)
-{
-        GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
-        GError *error = NULL;
-
-        priv->power_screen_proxy = g_dbus_proxy_new_finish (res, &error);
-        if (priv->power_screen_proxy == NULL) {
-                if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-                        g_warning ("Failed to get proxy for power (screen): %s",
-                                   error->message);
-                g_error_free (error);
-        }
-}
-
-static void
 power_keyboard_ready_cb (GObject             *source_object,
                          GAsyncResult        *res,
                          GsdMediaKeysManager *manager)
@@ -3599,16 +3515,6 @@ gsd_media_keys_manager_dbus_register (GApplication    *app,
                           NULL,
                           GSD_DBUS_NAME ".Power",
                           GSD_DBUS_PATH "/Power",
-                          GSD_DBUS_BASE_INTERFACE ".Power.Screen",
-                          NULL,
-                          (GAsyncReadyCallback) power_screen_ready_cb,
-                          manager);
-
-        g_dbus_proxy_new (connection,
-                          G_DBUS_PROXY_FLAGS_NONE,
-                          NULL,
-                          GSD_DBUS_NAME ".Power",
-                          GSD_DBUS_PATH "/Power",
                           GSD_DBUS_BASE_INTERFACE ".Power.Keyboard",
                           NULL,
                           (GAsyncReadyCallback) power_keyboard_ready_cb,
@@ -3635,7 +3541,6 @@ gsd_media_keys_manager_dbus_unregister (GApplication    *app,
         }
 
         g_clear_object (&priv->power_proxy);
-        g_clear_object (&priv->power_screen_proxy);
         g_clear_object (&priv->power_keyboard_proxy);
         g_clear_object (&priv->composite_device);
 

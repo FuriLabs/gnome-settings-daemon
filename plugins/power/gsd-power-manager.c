@@ -25,24 +25,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <glib/gi18n.h>
-#include <gtk/gtk.h>
 #include <libupower-glib/upower.h>
 #include <libnotify/notify.h>
-#include <canberra-gtk.h>
 #include <glib-unix.h>
 #include <gio/gunixfdlist.h>
 
 #define GNOME_DESKTOP_USE_UNSTABLE_API
 #include <libgnome-desktop/gnome-idle-monitor.h>
 
-#include <gsd-input-helper.h>
-
 #include "gsd-power-constants.h"
 #include "gsm-inhibitor-flag.h"
 #include "gsm-presence-flag.h"
 #include "gsm-manager-logout-mode.h"
 #include "gpm-common.h"
-#include "gsd-backlight.h"
 #include "gnome-settings-profile.h"
 #include "gnome-settings-bus.h"
 #include "gnome-settings-daemon/gsd-enums.h"
@@ -69,7 +64,6 @@
 #define GSD_POWER_DBUS_NAME                     GSD_DBUS_NAME ".Power"
 #define GSD_POWER_DBUS_PATH                     GSD_DBUS_PATH "/Power"
 #define GSD_POWER_DBUS_INTERFACE                GSD_DBUS_BASE_INTERFACE ".Power"
-#define GSD_POWER_DBUS_INTERFACE_SCREEN         GSD_POWER_DBUS_INTERFACE ".Screen"
 #define GSD_POWER_DBUS_INTERFACE_KEYBOARD       GSD_POWER_DBUS_INTERFACE ".Keyboard"
 
 #define GSD_POWER_MANAGER_NOTIFY_TIMEOUT_SHORT          10 * 1000 /* ms */
@@ -78,6 +72,10 @@
 #define SYSTEMD_DBUS_NAME                       "org.freedesktop.login1"
 #define SYSTEMD_DBUS_PATH                       "/org/freedesktop/login1"
 #define SYSTEMD_DBUS_INTERFACE                  "org.freedesktop.login1.Manager"
+
+#define SHELL_BRIGHTNESS_DBUS_NAME              "org.gnome.Shell.Brightness"
+#define SHELL_BRIGHTNESS_DBUS_PATH              "/org/gnome/Shell/Brightness"
+#define SHELL_BRIGHTNESS_DBUS_INTERFACE         "org.gnome.Shell.Brightness"
 
 /* Time between notifying the user about a critical action and the action itself in UPower. */
 #define GSD_ACTION_DELAY 20
@@ -94,21 +92,6 @@
 
 static const gchar introspection_xml[] =
 "<node>"
-"  <interface name='org.gnome.SettingsDaemon.Power.Screen'>"
-"    <property name='Brightness' type='i' access='readwrite'/>"
-"    <method name='StepUp'>"
-"      <arg type='i' name='new_percentage' direction='out'/>"
-"      <arg type='s' name='connector' direction='out'/>"
-"    </method>"
-"    <method name='StepDown'>"
-"      <arg type='i' name='new_percentage' direction='out'/>"
-"      <arg type='s' name='connector' direction='out'/>"
-"    </method>"
-"    <method name='Cycle'>"
-"      <arg type='i' name='new_percentage' direction='out'/>"
-"      <arg type='i' name='output_id' direction='out'/>"
-"    </method>"
-"  </interface>"
 "  <interface name='org.gnome.SettingsDaemon.Power.Keyboard'>"
 "    <property name='Brightness' type='i' access='readwrite'/>"
 "    <property name='Steps' type='i' access='read'/>"
@@ -157,6 +140,8 @@ struct _GsdPowerManager
         gboolean                 lid_is_present;
         gboolean                 lid_is_closed;
         gboolean                 session_is_active;
+        gboolean                 screen_blanked;
+        gboolean                 light_claimed;
         UpClient                *up_client;
         GPtrArray               *devices_array;
         UpDevice                *device_composite;
@@ -168,8 +153,7 @@ struct _GsdPowerManager
         gboolean                 battery_is_low; /* battery low, or UPS discharging */
 
         /* Brightness */
-        GsdBacklight            *backlight;
-        gint                     pre_dim_brightness; /* level, not percentage */
+        GDBusProxy              *shell_brightness_proxy;
 
         /* Keyboard */
         GDBusProxy              *upower_kbd_proxy;
@@ -216,8 +200,6 @@ struct _GsdPowerManager
 
         guint                    temporary_unidle_on_ac_id;
         GsdPowerIdleMode         previous_idle_mode;
-
-        guint                    xscreensaver_watchdog_timer_id;
 
         /* Device Properties */
         gboolean                 show_sleep_warnings;
@@ -371,6 +353,7 @@ static void
 create_notification (const char *summary,
                      const char *body,
                      const char *icon_name,
+                     NotifyUrgency urgency,
                      NotificationPrivacyScope privacy_scope,
                      NotifyNotification **weak_pointer_location)
 {
@@ -383,8 +366,7 @@ create_notification (const char *summary,
         notify_notification_set_hint_string (notification, "x-gnome-privacy-scope",
                                              notification_privacy_scope_to_string (privacy_scope));
         notify_notification_set_hint (notification, "image-path", g_variant_new_string (icon_name));
-        notify_notification_set_urgency (notification,
-                                         NOTIFY_URGENCY_CRITICAL);
+        notify_notification_set_urgency (notification, urgency);
         *weak_pointer_location = notification;
         g_object_add_weak_pointer (G_OBJECT (notification),
                                    (gpointer *) weak_pointer_location);
@@ -435,6 +417,7 @@ engine_ups_discharging (GsdPowerManager *manager, UpDevice *device)
         /* create a new notification */
         create_notification (title, message->str,
                              "battery-low-symbolic",
+                             NOTIFY_URGENCY_NORMAL,
                              NOTIFICATION_PRIVACY_SYSTEM,
                              &manager->notification_ups_discharging);
         notify_notification_set_timeout (manager->notification_ups_discharging,
@@ -467,8 +450,11 @@ manager_critical_action_get (GsdPowerManager *manager)
 static gboolean
 manager_critical_action_stop_sound_cb (GsdPowerManager *manager)
 {
+        ca_context *ca_context;
+
         /* stop playing the alert as it's too late to do anything now */
-        play_loop_stop (&manager->critical_alert_timeout_id);
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+        play_loop_stop (ca_context, &manager->critical_alert_timeout_id);
 
         return FALSE;
 }
@@ -794,6 +780,7 @@ engine_charge_low (GsdPowerManager *manager, UpDevice *device)
         gdouble percentage;
         guint battery_level;
         UpDeviceKind kind;
+        ca_context *ca_context;
 
         /* get device properties */
         g_object_get (device,
@@ -841,6 +828,7 @@ engine_charge_low (GsdPowerManager *manager, UpDevice *device)
         /* create a new notification */
         create_notification (title, message,
                              "battery-low-symbolic",
+                             NOTIFY_URGENCY_NORMAL,
                              NOTIFICATION_PRIVACY_SYSTEM,
                              &manager->notification_low);
         notify_notification_set_timeout (manager->notification_low,
@@ -850,8 +838,10 @@ engine_charge_low (GsdPowerManager *manager, UpDevice *device)
 
         notify_notification_show (manager->notification_low, NULL);
 
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         /* play the sound, using sounds from the naming spec */
-        ca_context_play (ca_gtk_context_get (), 0,
+        ca_context_play (ca_context, 0,
                          CA_PROP_EVENT_ID, "battery-low",
                          /* TRANSLATORS: this is the sound description */
                          CA_PROP_EVENT_DESCRIPTION, _("Battery is low"), NULL);
@@ -867,6 +857,7 @@ engine_charge_critical (GsdPowerManager *manager, UpDevice *device)
         gdouble percentage;
         guint battery_level;
         UpDeviceKind kind;
+        ca_context *ca_context;
 
         /* get device properties */
         g_object_get (device,
@@ -914,6 +905,7 @@ engine_charge_critical (GsdPowerManager *manager, UpDevice *device)
         /* create a new notification */
         create_notification (title, message,
                              "battery-caution-symbolic",
+                             NOTIFY_URGENCY_CRITICAL,
                              NOTIFICATION_PRIVACY_SYSTEM,
                              &manager->notification_low);
         notify_notification_set_timeout (manager->notification_low,
@@ -921,17 +913,19 @@ engine_charge_critical (GsdPowerManager *manager, UpDevice *device)
 
         notify_notification_show (manager->notification_low, NULL);
 
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         switch (kind) {
 
         case UP_DEVICE_KIND_BATTERY:
         case UP_DEVICE_KIND_UPS:
                 g_debug ("critical charge level reached, starting sound loop");
-                play_loop_start (&manager->critical_alert_timeout_id);
+                play_loop_start (ca_context, &manager->critical_alert_timeout_id);
                 break;
 
         default:
                 /* play the sound, using sounds from the naming spec */
-                ca_context_play (ca_gtk_context_get (), 0,
+                ca_context_play (ca_context, 0,
                                  CA_PROP_EVENT_ID, "battery-caution",
                                  /* TRANSLATORS: this is the sound description */
                                  CA_PROP_EVENT_DESCRIPTION, _("Battery is critically low"), NULL);
@@ -949,6 +943,7 @@ engine_charge_action (GsdPowerManager *manager, UpDevice *device)
         GsdPowerActionType policy;
         guint timer_id;
         UpDeviceKind kind;
+        ca_context *ca_context;
 
         /* get device properties */
         g_object_get (device,
@@ -1006,6 +1001,7 @@ engine_charge_action (GsdPowerManager *manager, UpDevice *device)
         /* create a new notification */
         create_notification (title, message,
                              "battery-action-symbolic",
+                             NOTIFY_URGENCY_CRITICAL,
                              NOTIFICATION_PRIVACY_SYSTEM,
                              &manager->notification_low);
         notify_notification_set_timeout (manager->notification_low,
@@ -1014,8 +1010,10 @@ engine_charge_action (GsdPowerManager *manager, UpDevice *device)
         /* try to show */
         notify_notification_show (manager->notification_low, NULL);
 
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         /* play the sound, using sounds from the naming spec */
-        ca_context_play (ca_gtk_context_get (), 0,
+        ca_context_play (ca_context, 0,
                          CA_PROP_EVENT_ID, "battery-caution",
                          /* TRANSLATORS: this is the sound description */
                          CA_PROP_EVENT_DESCRIPTION, _("Battery is critically low"), NULL);
@@ -1029,6 +1027,7 @@ engine_device_warning_changed_cb (UpDevice *device, GParamSpec *pspec, GsdPowerM
         g_autofree char *serial = NULL;
         UpDeviceLevel warning;
         UpDeviceKind kind;
+        ca_context *ca_context;
 
         g_object_get (device,
                       "serial", &serial,
@@ -1055,7 +1054,8 @@ engine_device_warning_changed_cb (UpDevice *device, GParamSpec *pspec, GsdPowerM
                 /* FIXME: this only handles one notification
                  * for the whole system, instead of one per device */
                 g_debug ("fully charged or charging, hiding notifications if any");
-                play_loop_stop (&manager->critical_alert_timeout_id);
+                ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+                play_loop_stop (ca_context, &manager->critical_alert_timeout_id);
                 if (kind != UP_DEVICE_KIND_UPS)
                         notify_close_if_showing (&manager->notification_low);
                 else
@@ -1202,6 +1202,92 @@ action_hibernate (GsdPowerManager *manager)
                            "Error calling Hibernate");
 }
 
+static gboolean
+shell_brightness_has_control (GsdPowerManager *manager)
+{
+        g_autoptr (GVariant) has_control_variant = NULL;
+
+        if (!manager->shell_brightness_proxy)
+                return FALSE;
+
+        has_control_variant =
+                g_dbus_proxy_get_cached_property (manager->shell_brightness_proxy,
+                                                  "HasBrightnessControl");
+
+        if (!has_control_variant)
+                return FALSE;
+
+        return g_variant_get_boolean (has_control_variant);
+}
+
+static void
+shell_brightness_set_auto_target_cb (GObject      *source_object,
+                                     GAsyncResult *res,
+                                     gpointer      user_data)
+{
+        g_autoptr (GVariant) result = NULL;
+        g_autoptr (GError) error = NULL;
+
+        result = g_dbus_proxy_call_finish (G_DBUS_PROXY (source_object),
+                                           res,
+                                           &error);
+        if (result)
+                return;
+
+        g_warning ("couldn't set the auto brightness target: %s",
+                   error->message);
+}
+
+static void
+shell_brightness_set_auto_target (GsdPowerManager *manager,
+                                  float            target)
+{
+        if (!manager->shell_brightness_proxy)
+                return;
+
+        g_dbus_proxy_call (G_DBUS_PROXY (manager->shell_brightness_proxy),
+                           "SetAutoBrightnessTarget",
+                           g_variant_new ("(d)", target),
+                           G_DBUS_CALL_FLAGS_NONE,
+                           -1, NULL,
+                           shell_brightness_set_auto_target_cb, NULL);
+}
+
+static void
+shell_brightness_set_dimming_cb (GObject      *source_object,
+                                 GAsyncResult *res,
+                                 gpointer      user_data)
+{
+        g_autoptr (GVariant) result = NULL;
+        g_autoptr (GError) error = NULL;
+        gboolean enable = !!GPOINTER_TO_UINT (user_data);
+
+        result = g_dbus_proxy_call_finish (G_DBUS_PROXY (source_object),
+                                           res,
+                                           &error);
+        if (result)
+                return;
+
+        g_warning ("couldn't %s dimming: %s",
+                   enable ? "enable" : "disable",
+                   error->message);
+}
+
+static void
+shell_brightness_set_dimming (GsdPowerManager *manager,
+                              gboolean         enable)
+{
+        if (!manager->shell_brightness_proxy)
+                return;
+
+        g_dbus_proxy_call (G_DBUS_PROXY (manager->shell_brightness_proxy),
+                           "SetDimming",
+                           g_variant_new ("(b)", enable),
+                           G_DBUS_CALL_FLAGS_NONE,
+                           -1, NULL,
+                           shell_brightness_set_dimming_cb,
+                           GUINT_TO_POINTER (enable));
+}
 
 static void
 light_claimed_cb (GObject      *source_object,
@@ -1240,16 +1326,29 @@ light_released_cb (GObject      *source_object,
         }
 }
 
+static gboolean
+iio_proxy_should_claim_light (GsdPowerManager *manager)
+{
+        if (!shell_brightness_has_control (manager))
+                return FALSE;
+        if (!manager->session_is_active)
+                return FALSE;
+        if (manager->screen_blanked)
+                return FALSE;
+	if (!g_settings_get_boolean (manager->settings, "ambient-enabled"))
+		return FALSE;
+
+        return TRUE;
+}
 
 static void
-iio_proxy_claim_light (GsdPowerManager *manager, gboolean active)
+iio_proxy_claim_light (GsdPowerManager *manager,
+                       gboolean         active)
 {
         if (manager->iio_proxy == NULL)
                 return;
-        if (!manager->backlight)
+        if (manager->light_claimed == !!active)
                 return;
-	if (active && !manager->session_is_active)
-		return;
 
         /* FIXME:
          * Remove when iio-sensor-proxy sends events only to clients instead
@@ -1273,6 +1372,14 @@ iio_proxy_claim_light (GsdPowerManager *manager, gboolean active)
                            manager->cancellable,
                            active ? light_claimed_cb : light_released_cb,
                            manager);
+
+        manager->light_claimed = !!active;
+}
+
+static void
+iio_proxy_maybe_claim_light (GsdPowerManager *manager)
+{
+        iio_proxy_claim_light (manager, iio_proxy_should_claim_light (manager));
 }
 
 typedef enum {
@@ -1294,19 +1401,21 @@ set_power_saving_mode (GsdPowerManager  *manager,
 }
 
 static void
-backlight_enable (GsdPowerManager *manager)
+enable_monitors (GsdPowerManager *manager)
 {
-        iio_proxy_claim_light (manager, TRUE);
         set_power_saving_mode (manager, GSD_POWER_SAVE_MODE_ON);
+        manager->screen_blanked = FALSE;
+        iio_proxy_maybe_claim_light (manager);
 
         g_debug ("TESTSUITE: Unblanked screen");
 }
 
 static void
-backlight_disable (GsdPowerManager *manager)
+disable_monitors (GsdPowerManager *manager)
 {
-        iio_proxy_claim_light (manager, FALSE);
         set_power_saving_mode (manager, GSD_POWER_SAVE_MODE_OFF);
+        manager->screen_blanked = TRUE;
+        iio_proxy_maybe_claim_light (manager);
 
         g_debug ("TESTSUITE: Blanked screen");
 }
@@ -1332,7 +1441,7 @@ do_power_action_type (GsdPowerManager *manager,
                 action_poweroff (manager);
                 break;
         case GSD_POWER_ACTION_BLANK:
-                backlight_disable (manager);
+                disable_monitors (manager);
                 break;
         case GSD_POWER_ACTION_NOTHING:
                 break;
@@ -1499,8 +1608,12 @@ restart_inhibit_lid_switch_timer (GsdPowerManager *manager)
 static void
 do_lid_open_action (GsdPowerManager *manager)
 {
+        ca_context *ca_context;
+
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         /* play a sound, using sounds from the naming spec */
-        ca_context_play (ca_gtk_context_get (), 0,
+        ca_context_play (ca_context, 0,
                          CA_PROP_EVENT_ID, "lid-open",
                          /* TRANSLATORS: this is the sound description */
                          CA_PROP_EVENT_DESCRIPTION, _("Lid has been opened"),
@@ -1533,8 +1646,12 @@ lock_screensaver (GsdPowerManager *manager)
 static void
 do_lid_closed_action (GsdPowerManager *manager)
 {
+        ca_context *ca_context;
+
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         /* play a sound, using sounds from the naming spec */
-        ca_context_play (ca_gtk_context_get (), 0,
+        ca_context_play (ca_context, 0,
                          CA_PROP_EVENT_ID, "lid-close",
                          /* TRANSLATORS: this is the sound description */
                          CA_PROP_EVENT_DESCRIPTION, _("Lid has been closed"),
@@ -1639,32 +1756,6 @@ backlight_iface_emit_changed (GsdPowerManager *manager,
                                        "BrightnessChanged",
                                        g_variant_new ("(is)", value, source),
                                        NULL);
-}
-
-static void
-backlight_notify_brightness_cb (GsdPowerManager *manager, GParamSpec *pspec, GsdBacklight *backlight)
-{
-        backlight_iface_emit_changed (manager, GSD_POWER_DBUS_INTERFACE_SCREEN,
-                                      gsd_backlight_get_brightness (backlight), NULL);
-}
-
-static void
-display_backlight_dim (GsdPowerManager *manager,
-                       gint idle_percentage)
-{
-        gint brightness;
-
-        if (!manager->backlight)
-                return;
-
-        /* Fetch the current target brightness (not the actual display brightness)
-         * and return if it is already lower than the idle percentage. */
-        brightness = gsd_backlight_get_target_brightness (manager->backlight);
-        if (brightness < idle_percentage)
-                return;
-
-        manager->pre_dim_brightness = brightness;
-        gsd_backlight_set_brightness_async (manager->backlight, idle_percentage, NULL, NULL, NULL);
 }
 
 static gboolean
@@ -1788,7 +1879,7 @@ idle_set_mode (GsdPowerManager *manager, GsdPowerIdleMode mode)
                 /* display backlight */
                 idle_percentage = g_settings_get_int (manager->settings,
                                                       "idle-brightness");
-                display_backlight_dim (manager, idle_percentage);
+                shell_brightness_set_dimming (manager, TRUE);
 
                 /* keyboard backlight */
                 ret = kbd_backlight_dim (manager, idle_percentage, &error);
@@ -1802,7 +1893,7 @@ idle_set_mode (GsdPowerManager *manager, GsdPowerIdleMode mode)
         /* turn off screen and kbd */
         } else if (mode == GSD_POWER_IDLE_MODE_BLANK) {
 
-                backlight_disable (manager);
+                disable_monitors (manager);
 
                 /* only toggle keyboard if present and not already toggled */
                 if (manager->upower_kbd_proxy &&
@@ -1829,16 +1920,9 @@ idle_set_mode (GsdPowerManager *manager, GsdPowerIdleMode mode)
         /* turn on screen and restore user-selected brightness level */
         } else if (mode == GSD_POWER_IDLE_MODE_NORMAL) {
 
-                backlight_enable (manager);
+                enable_monitors (manager);
 
-                /* reset brightness if we dimmed */
-                if (manager->backlight && manager->pre_dim_brightness >= 0) {
-                        gsd_backlight_set_brightness_async (manager->backlight,
-                                                            manager->pre_dim_brightness,
-                                                            NULL, NULL, NULL);
-                        /* XXX: Ideally we would do this from the async callback. */
-                        manager->pre_dim_brightness = -1;
-                }
+                shell_brightness_set_dimming (manager, FALSE);
 
                 /* only toggle keyboard if present and already toggled off */
                 if (manager->upower_kbd_proxy &&
@@ -2187,13 +2271,17 @@ up_client_on_battery_cb (UpClient *client,
                          GParamSpec *pspec,
                          GsdPowerManager *manager)
 {
+        ca_context *ca_context;
+
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+
         if (up_client_get_on_battery (manager->up_client)) {
-                ca_context_play (ca_gtk_context_get (), 0,
+                ca_context_play (ca_context, 0,
                                  CA_PROP_EVENT_ID, "power-unplug",
                                  /* TRANSLATORS: this is the sound description */
                                  CA_PROP_EVENT_DESCRIPTION, _("On battery power"), NULL);
         } else {
-                ca_context_play (ca_gtk_context_get (), 0,
+                ca_context_play (ca_context, 0,
                                  CA_PROP_EVENT_ID, "power-plug",
                                  /* TRANSLATORS: this is the sound description */
                                  CA_PROP_EVENT_DESCRIPTION, _("On AC power"), NULL);
@@ -2467,17 +2555,17 @@ show_sleep_warning (GsdPowerManager *manager)
         switch (manager->sleep_action_type) {
         case GSD_POWER_ACTION_LOGOUT:
                 create_notification (_("Automatic Logout"), _("You will soon log out because of inactivity"),
-                                     NULL, NOTIFICATION_PRIVACY_USER,
+                                     NULL, NOTIFY_URGENCY_CRITICAL, NOTIFICATION_PRIVACY_USER,
                                      &manager->notification_sleep_warning);
                 break;
         case GSD_POWER_ACTION_SUSPEND:
                 create_notification (_("Automatic Suspend"), _("Suspending soon because of inactivity"),
-                                     NULL, NOTIFICATION_PRIVACY_SYSTEM,
+                                     NULL, NOTIFY_URGENCY_CRITICAL, NOTIFICATION_PRIVACY_SYSTEM,
                                      &manager->notification_sleep_warning);
                 break;
         case GSD_POWER_ACTION_HIBERNATE:
                 create_notification (_("Automatic Hibernation"), _("Suspending soon because of inactivity"),
-                                     NULL, NOTIFICATION_PRIVACY_SYSTEM,
+                                     NULL, NOTIFY_URGENCY_CRITICAL, NOTIFICATION_PRIVACY_SYSTEM,
                                      &manager->notification_sleep_warning);
                 break;
         default:
@@ -2590,6 +2678,10 @@ engine_settings_key_changed_cb (GSettings *settings,
                         disable_power_saver (manager);
                 return;
         }
+        if (g_str_equal (key, "ambient-enabled")) {
+                iio_proxy_maybe_claim_light (manager);
+		return;
+        }
 }
 
 static void
@@ -2609,12 +2701,9 @@ engine_session_properties_changed_cb (GDBusProxy      *session,
                 manager->session_is_active = active;
                 /* when doing the fast-user-switch into a new account,
                  * ensure the new account is undimmed and with the backlight on */
-                if (active) {
+                if (active)
                         idle_set_mode (manager, GSD_POWER_IDLE_MODE_NORMAL);
-                        iio_proxy_claim_light (manager, TRUE);
-                } else {
-                        iio_proxy_claim_light (manager, FALSE);
-                }
+                iio_proxy_maybe_claim_light (manager);
                 g_variant_unref (v);
 
                 sync_lid_inhibitor (manager);
@@ -2795,7 +2884,7 @@ handle_suspend_actions (GsdPowerManager *manager)
 {
         /* close any existing notification about idleness */
         notify_close_if_showing (&manager->notification_sleep_warning);
-        backlight_disable (manager);
+        disable_monitors (manager);
         uninhibit_suspend (manager);
 }
 
@@ -2803,7 +2892,7 @@ static void
 handle_resume_actions (GsdPowerManager *manager)
 {
         /* ensure we turn the panel back on after resume */
-        backlight_enable (manager);
+        enable_monitors (manager);
 
         /* set up the delay again */
         inhibit_suspend (manager);
@@ -2840,7 +2929,7 @@ iio_proxy_changed (GsdPowerManager *manager)
         gint pc;
 
         /* no display hardware */
-        if (!manager->backlight)
+        if (!shell_brightness_has_control (manager))
                 return;
 
         /* disabled */
@@ -2890,8 +2979,7 @@ iio_proxy_changed (GsdPowerManager *manager)
                  manager->ambient_accumulator);
         pc = manager->ambient_accumulator;
 
-        if (manager->backlight)
-                gsd_backlight_set_brightness_async (manager->backlight, pc, NULL, NULL, NULL);
+        shell_brightness_set_auto_target (manager, pc / 100);
 
         /* Assume setting worked. */
         manager->ambient_percentage_old = pc;
@@ -2925,7 +3013,7 @@ iio_proxy_appeared_cb (GDBusConnection *connection,
                                                "net.hadess.SensorProxy",
                                                NULL,
                                                NULL);
-        iio_proxy_claim_light (manager, TRUE);
+        iio_proxy_maybe_claim_light (manager);
 }
 
 static void
@@ -3024,14 +3112,6 @@ gsd_power_manager_startup (GApplication *app)
         manager->ambient_last_absolute = -1.f;
         manager->ambient_last_time = 0;
 
-        manager->backlight = gsd_backlight_new (NULL);
-
-        if (manager->backlight)
-                g_signal_connect_object (manager->backlight,
-                                         "notify::brightness",
-                                         G_CALLBACK (backlight_notify_brightness_cb),
-                                         manager, G_CONNECT_SWAPPED);
-
         /* Set up a delay inhibitor to be informed about suspend attempts */
         g_signal_connect (manager->logind_proxy, "g-signal",
                           G_CALLBACK (logind_proxy_signal_cb),
@@ -3063,7 +3143,6 @@ gsd_power_manager_startup (GApplication *app)
 
         manager->kbd_brightness_old = -1;
         manager->kbd_brightness_pre_dim = -1;
-        manager->pre_dim_brightness = -1;
         g_signal_connect (manager->settings, "changed",
                           G_CALLBACK (engine_settings_key_changed_cb), manager);
         g_signal_connect (manager->settings_bus, "changed",
@@ -3100,6 +3179,21 @@ gsd_power_manager_startup (GApplication *app)
                                   power_keyboard_proxy_ready_cb,
                                   manager);
 
+        manager->shell_brightness_proxy =
+                g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+                                               G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
+                                               NULL,
+                                               SHELL_BRIGHTNESS_DBUS_NAME,
+                                               SHELL_BRIGHTNESS_DBUS_PATH,
+                                               SHELL_BRIGHTNESS_DBUS_INTERFACE,
+                                               NULL,
+                                               &error);
+        if (manager->shell_brightness_proxy == NULL) {
+                g_debug ("No org.gnome.Shell.Brightness support, "
+                         "dimming and auto brightness is disabled");
+                g_clear_error (&error);
+        }
+
         manager->devices_array = g_ptr_array_new_with_free_func (g_object_unref);
         manager->devices_notified_ht = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                               g_free, NULL);
@@ -3117,21 +3211,7 @@ gsd_power_manager_startup (GApplication *app)
         idle_configure (manager);
 
         /* ensure the default dpms timeouts are cleared */
-        backlight_enable (manager);
-
-        if (!gnome_settings_is_wayland ())
-                manager->xscreensaver_watchdog_timer_id = gsd_power_enable_screensaver_watchdog ();
-
-        /* queue a signal in case the proxy from gnome-shell was created before we got here
-           (likely, considering that to get here we need a reply from gnome-shell)
-        */
-        if (manager->backlight) {
-                manager->ambient_percentage_old = gsd_backlight_get_brightness (manager->backlight);
-                backlight_iface_emit_changed (manager, GSD_POWER_DBUS_INTERFACE_SCREEN,
-                                              manager->ambient_percentage_old, NULL);
-        } else {
-                backlight_iface_emit_changed (manager, GSD_POWER_DBUS_INTERFACE_SCREEN, -1, NULL);
-        }
+        enable_monitors (manager);
 
         G_APPLICATION_CLASS (gsd_power_manager_parent_class)->startup (app);
 
@@ -3142,6 +3222,7 @@ static void
 gsd_power_manager_shutdown (GApplication *app)
 {
         GsdPowerManager *manager = GSD_POWER_MANAGER (app);
+        ca_context *ca_context;
 
         g_debug ("Stopping power manager");
 
@@ -3193,15 +3274,12 @@ gsd_power_manager_shutdown (GApplication *app)
         disable_power_saver (manager);
         g_clear_object (&manager->power_profiles_proxy);
 
-        play_loop_stop (&manager->critical_alert_timeout_id);
+        ca_context = gsd_application_get_ca_context (GSD_APPLICATION (manager));
+        play_loop_stop (ca_context, &manager->critical_alert_timeout_id);
 
         g_clear_object (&manager->idle_monitor);
         g_clear_object (&manager->upower_kbd_proxy);
-
-        if (manager->xscreensaver_watchdog_timer_id > 0) {
-                g_source_remove (manager->xscreensaver_watchdog_timer_id);
-                manager->xscreensaver_watchdog_timer_id = 0;
-        }
+        g_clear_object (&manager->shell_brightness_proxy);
 
         g_clear_handle_id (&manager->iio_proxy_watch_id, g_bus_unwatch_name);
 
@@ -3267,91 +3345,6 @@ handle_method_call_keyboard (GsdPowerManager *manager,
 }
 
 static void
-backlight_brightness_step_cb (GObject *object,
-                              GAsyncResult *res,
-                              gpointer user_data)
-{
-        GsdBacklight *backlight = GSD_BACKLIGHT (object);
-        GDBusMethodInvocation *invocation = G_DBUS_METHOD_INVOCATION (user_data);
-        GsdPowerManager *manager;
-        GError *error = NULL;
-        const char *connector;
-        gint brightness;
-
-        manager = g_object_get_data (G_OBJECT (invocation), "gsd-power-manager");
-        brightness = gsd_backlight_set_brightness_finish (backlight, res, &error);
-
-        /* ambient brightness no longer valid */
-        manager->ambient_percentage_old = brightness;
-        manager->ambient_norm_required = TRUE;
-
-        if (error) {
-                g_dbus_method_invocation_take_error (invocation,
-                                                     error);
-        } else {
-                connector = gsd_backlight_get_connector (backlight);
-
-                g_dbus_method_invocation_return_value (invocation,
-                                                       g_variant_new ("(is)",
-                                                                      brightness,
-                                                                      connector ? connector : ""));
-        }
-}
-
-/* Callback */
-static void
-backlight_brightness_set_cb (GObject *object,
-                             GAsyncResult *res,
-                             gpointer user_data)
-{
-        GsdPowerManager *manager = GSD_POWER_MANAGER (user_data);
-        GsdBacklight *backlight = GSD_BACKLIGHT (object);
-        gint brightness;
-
-        /* Return the invocation. */
-        brightness = gsd_backlight_set_brightness_finish (backlight, res, NULL);
-
-        if (brightness >= 0) {
-                manager->ambient_percentage_old = brightness;
-                manager->ambient_norm_required = TRUE;
-        }
-
-        g_object_unref (manager);
-}
-
-static void
-handle_method_call_screen (GsdPowerManager *manager,
-                           const gchar *method_name,
-                           GVariant *parameters,
-                           GDBusMethodInvocation *invocation)
-{
-        if (!manager->backlight) {
-                g_dbus_method_invocation_return_error_literal (invocation,
-                                                               GSD_POWER_MANAGER_ERROR, GSD_POWER_MANAGER_ERROR_NO_BACKLIGHT,
-                                                               "No usable backlight could be found!");
-                return;
-        }
-
-        g_object_set_data_full (G_OBJECT (invocation), "gsd-power-manager", g_object_ref (manager), g_object_unref);
-
-        if (g_strcmp0 (method_name, "StepUp") == 0) {
-                g_debug ("screen step up");
-                gsd_backlight_step_up_async (manager->backlight, NULL, backlight_brightness_step_cb, invocation);
-
-        } else if (g_strcmp0 (method_name, "StepDown") == 0) {
-                g_debug ("screen step down");
-                gsd_backlight_step_down_async (manager->backlight, NULL, backlight_brightness_step_cb, invocation);
-
-        } else if (g_strcmp0 (method_name, "Cycle") == 0) {
-                g_debug ("screen cycle up");
-                gsd_backlight_cycle_up_async (manager->backlight, NULL, backlight_brightness_step_cb, invocation);
-
-        } else {
-                g_assert_not_reached ();
-        }
-}
-
-static void
 handle_method_call (GDBusConnection       *connection,
                     const gchar           *sender,
                     const gchar           *object_path,
@@ -3372,12 +3365,7 @@ handle_method_call (GDBusConnection       *connection,
         g_debug ("Calling method '%s.%s' for Power",
                  interface_name, method_name);
 
-        if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_SCREEN) == 0) {
-                handle_method_call_screen (manager,
-                                           method_name,
-                                           parameters,
-                                           invocation);
-        } else if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_KEYBOARD) == 0) {
+        if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_KEYBOARD) == 0) {
                 handle_method_call_keyboard (manager,
                                              method_name,
                                              parameters,
@@ -3397,20 +3385,7 @@ handle_get_property_other (GsdPowerManager *manager,
         gint32 value;
 
 
-        if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_SCREEN) == 0) {
-                if (g_strcmp0 (property_name, "Brightness") != 0) {
-                        g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                     "No such property: %s", property_name);
-                        return NULL;
-                }
-
-                if (manager->backlight)
-                        value = gsd_backlight_get_brightness (manager->backlight);
-                else
-                        value = -1;
-
-                retval = g_variant_new_int32 (value);
-        } else if (manager->upower_kbd_proxy &&
+        if (manager->upower_kbd_proxy &&
                    g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_KEYBOARD) == 0) {
                 if (g_strcmp0 (property_name, "Brightness") == 0) {
                         value = ABS_TO_PERCENTAGE (0,
@@ -3449,8 +3424,7 @@ handle_get_property (GDBusConnection *connection,
                 return NULL;
         }
 
-        if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_SCREEN) == 0 ||
-                   g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_KEYBOARD) == 0) {
+        if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_KEYBOARD) == 0) {
                 return handle_get_property_other (manager, interface_name, property_name, error);
         } else {
                 g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
@@ -3474,23 +3448,7 @@ handle_set_property_other (GsdPowerManager *manager,
                 return FALSE;
         }
 
-        if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_SCREEN) == 0) {
-                /* To do error reporting we would need to handle the Set call
-                 * instead of doing it through set_property.
-                 * But none of our DBus API users actually read the result. */
-                g_variant_get (value, "i", &brightness_value);
-                if (manager->backlight) {
-                        gsd_backlight_set_brightness_async (manager->backlight, brightness_value,
-                                                            NULL,
-                                                            backlight_brightness_set_cb, g_object_ref (manager));
-                        return TRUE;
-                } else {
-                        g_set_error_literal (error, GSD_POWER_MANAGER_ERROR, GSD_POWER_MANAGER_ERROR_NO_BACKLIGHT,
-                                             "No usable backlight could be found!");
-                        return FALSE;
-                }
-
-        } else if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_KEYBOARD) == 0) {
+        if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_KEYBOARD) == 0) {
                 g_variant_get (value, "i", &brightness_value);
                 brightness_value = PERCENTAGE_TO_ABS (0, manager->kbd_brightness_max,
                                                       brightness_value);
@@ -3529,8 +3487,7 @@ handle_set_property (GDBusConnection *connection,
                 return FALSE;
         }
 
-        if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_SCREEN) == 0 ||
-            g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_KEYBOARD) == 0) {
+        if (g_strcmp0 (interface_name, GSD_POWER_DBUS_INTERFACE_KEYBOARD) == 0) {
                 return handle_set_property_other (manager, interface_name, property_name, value, error);
         } else {
                 g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
