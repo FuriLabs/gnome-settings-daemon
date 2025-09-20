@@ -1,3 +1,9 @@
+gnome-settings-daemon (49.0-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 20 Sep 2025 13:21:55 -0400
+
 gnome-settings-daemon (48.1-2) unstable; urgency=medium
 
   * Add Recommends: systemd-oomd (Closes: #1111296)
