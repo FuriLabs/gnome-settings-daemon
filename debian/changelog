@@ -1,8 +1,23 @@
-gnome-settings-daemon (49.0-1) UNRELEASED; urgency=medium
+gnome-settings-daemon (49.0-1) experimental; urgency=medium
 
+  [ Jeremy Bícha ]
   * New upstream release
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 20 Sep 2025 13:21:55 -0400
+  [ Alessandro Astone ]
+  * debian/control: Add Breaks for dropping org.gnome.SettingsDaemon.Wacom
+  * debian/install: Drop empty etc/xdg/autostart directory
+
+  [ Daniel van Vugt ]
+  * debian/control: Move the Wacom "Breaks" to the common package
+  * debian/control: Add missing build/test dependency on python3-dbusmock
+  * debian/control: Bump requirement to gnome-desktop-4
+  * debian/control: The libcanberra-gtk3 build dep changed to libcanberra
+  * debian/control: Remove build-depends on GTK
+  * debian/control: Remove build-depends on wacom packages
+  * debian/control: Remove build-depends on polkitd
+  * debian: Remove now empty directory: usr/share/polkit-1
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 20 Sep 2025 13:37:06 -0400
 
 gnome-settings-daemon (48.1-2) unstable; urgency=medium
 
