@@ -12,7 +12,6 @@ Build-Depends: debhelper-compat (= 13),
                dh-exec,
                dh-sequence-gnome,
                gsettings-desktop-schemas-dev (>= 46~beta),
-               gtk-doc-tools,
                intltool,
                libaccountsservice-dev (>= 0.6.34),
                libasound2-dev [linux-any],
@@ -23,10 +22,10 @@ Build-Depends: debhelper-compat (= 13),
                libgcr-4-dev [linux-any],
                libgeoclue-2-dev,
                libgeocode-glib-dev (>= 3.26.3),
+               libgio-2.0-dev,
                libglib2.0-dev,
                libglib2.0-dev:native,
                libgnome-desktop-4-dev,
-               libgtk-3-dev,
                libgudev-1.0-dev [linux-any],
                libgweather-4-dev (>= 4.1),
                libibus-1.0-dev,
@@ -49,7 +48,7 @@ Build-Depends: debhelper-compat (= 13),
                python3-gi <!nocheck>,
                systemd-dev [linux-any],
                xkb-data,
-Standards-Version: 4.7.0
+Standards-Version: 4.7.2
 Homepage: https://gitlab.gnome.org/GNOME/gnome-settings-daemon
 XS-Debian-Vcs-Git: https://salsa.debian.org/gnome-team/gnome-settings-daemon.git
 XS-Debian-Vcs-Browser: https://salsa.debian.org/gnome-team/gnome-settings-daemon
@@ -69,6 +68,7 @@ Depends: default-logind [linux-any] | logind [linux-any],
 Recommends: iio-sensor-proxy,
             pipewire-audio,
             pkexec,
+            systemd-oomd,
             x11-xserver-utils
 Suggests: usbguard
 Breaks: gnome-shell (<< 47~rc),
