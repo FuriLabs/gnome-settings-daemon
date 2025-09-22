@@ -1,3 +1,23 @@
+gnome-settings-daemon (49.0-1ubuntu2) questing; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Add Build-Depends: accountsservice
+    + debian/patches/ubuntu:
+      - keyboard-sync-input-sources-to-accountsservice.patch
+      - keyboard-Use-ibus-sources-from-locale.patch
+      - lid-close-suspend-support.patch
+      - media-keys-restore-terminal-keyboard-shortcut-schema.patch
+      - print-notifications-suppress-printer-may-not-be-connected.patch
+      - teach-gsd-about-the-gnome-calculator-snap-.desktop-name.patch
+    + debian/gnome-settings-daemon.install:
+      - Install apport hook
+  * d/p/u/gsd-donation-reminder: Drop patch, moved to ubuntu-settings
+    (LP: #2125267)
+  * d/p/u: Refresh patches
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 22 Sep 2025 17:48:24 +0200
+
 gnome-settings-daemon (49.0-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]
