@@ -70,6 +70,7 @@ Recommends: iio-sensor-proxy,
 Suggests: usbguard
 Breaks: gnome-shell (<< 47~rc),
         mutter-common (<< 47~rc),
+        phosh (<< 0.50~rc),
 Description: daemon handling the GNOME session settings
  This package contains the daemon which is responsible for setting the
  various parameters of a GNOME session and the applications that run
