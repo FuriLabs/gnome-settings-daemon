@@ -1,3 +1,9 @@
+gnome-settings-daemon (49.0-1ubuntu3) questing; urgency=medium
+
+  * d/maintscript: Remove obsolete autostart desktop files
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 26 Sep 2025 14:05:46 +0200
+
 gnome-settings-daemon (49.0-1ubuntu2) questing; urgency=medium
 
   * Merge with debian. Remaining changes:
