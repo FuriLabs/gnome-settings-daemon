@@ -1,3 +1,11 @@
+gnome-settings-daemon (49.1-3) unstable; urgency=medium
+
+  * Update build options for hurd
+  * Remove unnecessary Build-Depends: libpackagekit-glib2-dev
+  * Remove unnecessary Priority: optional field
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 09 Dec 2025 18:08:58 -0500
+
 gnome-settings-daemon (49.1-2) unstable; urgency=medium
 
   * Team upload
