@@ -1,8 +1,12 @@
 gnome-settings-daemon (49.0-2) UNRELEASED; urgency=medium
 
+  [ Alessandro Astone ]
   * d/maintscript: Remove obsolete autostart desktop files
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 26 Sep 2025 14:28:13 +0200
+  [ Guido Günther ]
+  * debian/control: Add breaks on Phosh for dropping backlight handling
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 15 Oct 2025 11:47:37 +0100
 
 gnome-settings-daemon (49.0-1) experimental; urgency=medium
 
