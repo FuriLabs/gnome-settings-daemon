@@ -1,4 +1,13 @@
-gnome-settings-daemon (49.1-1) UNRELEASED; urgency=medium
+gnome-settings-daemon (49.1-1) experimental; urgency=medium
+
+  * Team upload
+
+  [ Simon McVittie ]
+  * New upstream release
+  * d/watch: Update to uscan syntax v5
+  * d/copyright: Don't quote the FSF's former postal address here
+  * d/control: Remove Gunnar Hjalmarsson from Uploaders (Closes: #1069566)
+  * d/control: Remove Rules-Requires-Root, unnecessary since trixie
 
   [ Alessandro Astone ]
   * d/maintscript: Remove obsolete autostart desktop files
@@ -6,10 +15,7 @@ gnome-settings-daemon (49.1-1) UNRELEASED; urgency=medium
   [ Guido Günther ]
   * debian/control: Add breaks on Phosh for dropping backlight handling
 
-  [ Simon McVittie ]
-  * New upstream release
-
- -- Simon McVittie <smcv@debian.org>  Wed, 15 Oct 2025 11:49:09 +0100
+ -- Simon McVittie <smcv@debian.org>  Wed, 15 Oct 2025 13:49:31 +0100
 
 gnome-settings-daemon (49.0-1) experimental; urgency=medium
 
