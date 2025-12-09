@@ -43,5 +43,3 @@ endif
 
 execute_before_dh_clean:
 	rm -f debian/gnome-settings-daemon.install.$(DEB_HOST_ARCH_OS)
-
-override_dh_gnome_clean:
