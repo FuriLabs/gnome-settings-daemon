@@ -103,8 +103,7 @@ Section: libdevel
 Architecture: any
 Multi-Arch: same
 Depends: libglib2.0-dev,
-         ${misc:Depends},
-         ${shlibs:Depends}
+         ${misc:Depends}
 Description: Headers for building applications communicating with gnome-settings-daemon
  This package contains header files required to build applications that
  communicate with the GNOME settings daemon over D-Bus.
