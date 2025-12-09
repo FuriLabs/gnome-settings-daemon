@@ -20,9 +20,10 @@ CONFFLAGS = \
 	-Dalsa=false \
 	-Dcolord=false \
 	-Dgudev=false \
+	-Dsmartcard=false \
 	-Dsystemd=false \
-	-Dwayland=false \
-	-Dwwan=false
+	-Dwwan=false \
+	-Dxwayland=false
 endif
 
 override_dh_auto_configure:
