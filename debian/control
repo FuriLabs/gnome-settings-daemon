@@ -43,7 +43,7 @@ Build-Depends: debhelper-compat (= 13),
                python3-gi <!nocheck>,
                systemd-dev [linux-any],
                xkb-data,
-               xserver-xorg-input-wacom [!hurd-any !s390 !s390x],
+               xserver-xorg-input-wacom [!hurd-any !s390x]
 Standards-Version: 4.7.2
 Homepage: https://gitlab.gnome.org/GNOME/gnome-settings-daemon
 Vcs-Git: https://salsa.debian.org/gnome-team/gnome-settings-daemon.git
@@ -66,7 +66,7 @@ Recommends: iio-sensor-proxy,
 Suggests: usbguard
 Breaks: gnome-shell (<< 47~rc),
         mutter-common (<< 47~rc),
-        phosh (<< 0.50~rc),
+        phosh (<< 0.50~rc)
 Description: daemon handling the GNOME session settings
  This package contains the daemon which is responsible for setting the
  various parameters of a GNOME session and the applications that run
@@ -89,8 +89,8 @@ Provides: gnome-settings-daemon-schemas (= ${source:Version})
 Breaks: gdm (<< 49~alpha.1),
         gnome-initial-setup (<< 49~alpha),
         gnome-session (<< 49~alpha.1),
-        ubuntu-session (<< 49~alpha.1),
         gnome-shell (<< 49~alpha.1),
+        ubuntu-session (<< 49~alpha.1)
 Description: daemon handling the GNOME session settings - common files
  This package contains GSettings schemas and other architecture-independent
  files for GNOME Settings Daemon. It is probably not interesting on its own for
