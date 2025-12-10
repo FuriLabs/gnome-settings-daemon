@@ -33,13 +33,3 @@ override_dh_auto_configure:
 
 override_dh_installchangelogs:
 	dh_installchangelogs -XChangeLog
-
-# The build system is not installing the polkit policy files on non-linux
-# architectures even if the code requires libpolkit-gobject-1 library
-ifneq ($(DEB_HOST_ARCH_OS),linux)
-execute_before_dh_install:
-	grep -E -v 'polkit-1' debian/gnome-settings-daemon.install > debian/gnome-settings-daemon.install.$(DEB_HOST_ARCH_OS)
-endif
-
-execute_before_dh_clean:
-	rm -f debian/gnome-settings-daemon.install.$(DEB_HOST_ARCH_OS)
