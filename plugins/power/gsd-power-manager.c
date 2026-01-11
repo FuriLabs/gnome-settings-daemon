@@ -914,7 +914,7 @@ engine_charge_critical (GsdPowerManager *manager, UpDevice *device)
         /* create a new notification */
         create_notification (title, message,
                              "battery-caution-symbolic",
-                             NOTIFY_URGENCY_CRITICAL,
+                             NOTIFY_URGENCY_NORMAL,
                              NOTIFICATION_PRIVACY_SYSTEM,
                              &manager->notification_low);
         notify_notification_set_timeout (manager->notification_low,
@@ -1010,7 +1010,7 @@ engine_charge_action (GsdPowerManager *manager, UpDevice *device)
         /* create a new notification */
         create_notification (title, message,
                              "battery-action-symbolic",
-                             NOTIFY_URGENCY_CRITICAL,
+                             NOTIFY_URGENCY_NORMAL,
                              NOTIFICATION_PRIVACY_SYSTEM,
                              &manager->notification_low);
         notify_notification_set_timeout (manager->notification_low,
@@ -2591,17 +2591,17 @@ show_sleep_warning (GsdPowerManager *manager)
         switch (manager->sleep_action_type) {
         case GSD_POWER_ACTION_LOGOUT:
                 create_notification (_("Automatic Logout"), _("You will soon log out because of inactivity"),
-                                     NULL, NOTIFY_URGENCY_CRITICAL, NOTIFICATION_PRIVACY_USER,
+                                     NULL, NOTIFY_URGENCY_NORMAL, NOTIFICATION_PRIVACY_USER,
                                      &manager->notification_sleep_warning);
                 break;
         case GSD_POWER_ACTION_SUSPEND:
                 create_notification (_("Automatic Suspend"), _("Suspending soon because of inactivity"),
-                                     NULL, NOTIFY_URGENCY_CRITICAL, NOTIFICATION_PRIVACY_SYSTEM,
+                                     NULL, NOTIFY_URGENCY_NORMAL, NOTIFICATION_PRIVACY_SYSTEM,
                                      &manager->notification_sleep_warning);
                 break;
         case GSD_POWER_ACTION_HIBERNATE:
                 create_notification (_("Automatic Hibernation"), _("Suspending soon because of inactivity"),
-                                     NULL, NOTIFY_URGENCY_CRITICAL, NOTIFICATION_PRIVACY_SYSTEM,
+                                     NULL, NOTIFY_URGENCY_NORMAL, NOTIFICATION_PRIVACY_SYSTEM,
                                      &manager->notification_sleep_warning);
                 break;
         default:
@@ -2611,7 +2611,7 @@ show_sleep_warning (GsdPowerManager *manager)
         notify_notification_set_timeout (manager->notification_sleep_warning,
                                          NOTIFY_EXPIRES_NEVER);
         notify_notification_set_urgency (manager->notification_sleep_warning,
-                                         NOTIFY_URGENCY_CRITICAL);
+                                         NOTIFY_URGENCY_NORMAL);
 
         notify_notification_show (manager->notification_sleep_warning, NULL);
 }
