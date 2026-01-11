@@ -1,6 +1,7 @@
 sources = files(
   'gnome-settings-bus.c',
-  'gnome-settings-profile.c'
+  'gnome-settings-profile.c',
+  'gnome-settings-systemd.c',
 )
 
 dbus_ifaces = [
@@ -29,10 +30,6 @@ foreach iface: dbus_ifaces
 endforeach
 
 deps = [gio_unix_dep]
-
-if enable_wayland
-  deps += wayland_client_dep
-endif
 
 libgsd = shared_library(
   'gsd',

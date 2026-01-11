@@ -4,6 +4,7 @@ common_files = files(
 )
 
 sources = common_files + files(
+  'gsd-donation-reminder.c',
   'gsd-housekeeping-manager.c',
   'gsd-systemd-notify.c',
   'main.c'
@@ -12,7 +13,6 @@ sources += main_helper_sources
 
 deps = plugins_deps + [
   gio_unix_dep,
-  gtk_dep,
   libnotify_dep
 ]
 

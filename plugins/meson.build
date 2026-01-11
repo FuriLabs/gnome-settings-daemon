@@ -12,7 +12,6 @@ all_plugins = [
     ['usb-protection', 'UsbProtection', 'GNOME USB protection'],
     ['xsettings', 'XSettings', 'GNOME XSettings'],
     ['smartcard', 'Smartcard', 'GNOME smartcard'],
-    ['wacom', 'Wacom', 'GNOME Wacom tablet support'],
     ['print-notifications', 'PrintNotifications', 'GNOME printer notifications'],
     ['rfkill', 'Rfkill', 'GNOME RFKill support'],
     ['wwan', 'Wwan', 'GNOME WWan support'],
@@ -20,16 +19,16 @@ all_plugins = [
 
 disabled_plugins = []
 
+if not enable_xsettings
+    disabled_plugins += ['xsettings']
+endif
+
 if not enable_smartcard
     disabled_plugins += ['smartcard']
 endif
 
 if not enable_usb_protection
     disabled_plugins += ['usb-protection']
-endif
-
-if not enable_wacom
-    disabled_plugins += ['wacom']
 endif
 
 if not enable_cups
@@ -59,14 +58,13 @@ plugin_gate_units = {
       ['gnome-session-x11-services.target', 'after'],
       ['gnome-session-x11-services-ready.target', 'before'],
     ],
-#    'wacom': [['wacom.target']],
 #    'smartcard': [['smartcard.target']],
 }
 
 plugins_conf = configuration_data()
 plugins_conf.set('libexecdir', gsd_libexecdir)
 
-plugins_deps = [libgsd_dep]
+plugins_deps = [libgsd_dep, libcanberra_dep]
 
 plugins_cflags = ['-DGNOME_SETTINGS_LOCALEDIR="@0@"'.format(gsd_localedir)]
 
@@ -84,36 +82,15 @@ foreach plugin: all_plugins
     plugin_description = plugin[2]
     plugin_dbus_name='org.gnome.SettingsDaemon.@0@'.format(plugin_name_case)
 
-    desktop = 'org.gnome.SettingsDaemon.@0@.desktop'.format(plugin[1])
-
-    if disabled_plugins.contains(plugin_name)
-        desktop_in_file = files('org.gnome.SettingsDaemon.Dummy.desktop.in')
-    else
-        desktop_in_file = files('org.gnome.SettingsDaemon.Real.desktop.in')
-    endif
-
     cflags = [
         '-DG_LOG_DOMAIN="@0@-plugin"'.format(plugin_name),
         '-DPLUGIN_NAME="@0@"'.format(plugin_name),
         '-DPLUGIN_DBUS_NAME="@0@"'.format(plugin_dbus_name),
     ] + plugins_cflags
 
-    desktop = 'org.gnome.SettingsDaemon.@0@.desktop'.format(plugin[1])
-    desktop_conf = configuration_data()
-    desktop_conf.set('libexecdir', gsd_libexecdir)
-    desktop_conf.set('systemd_hidden', enable_systemd ? 'true' : 'false')
-    desktop_conf.set('pluginname', plugin_name)
-    desktop_conf.set('description', plugin_description)
-    configure_file(
-        input: desktop_in_file,
-        output: desktop,
-        configuration: desktop_conf,
-        install_dir: gsd_xdg_autostart
-    )
-
     if not disabled_plugins.contains(plugin_name)
-        user_target = 'org.gnome.SettingsDaemon.@0@.target'.format(plugin[1])
-        user_service = 'org.gnome.SettingsDaemon.@0@.service'.format(plugin[1])
+        user_target = 'org.gnome.SettingsDaemon.@0@.target'.format(plugin_name_case)
+        user_service = 'org.gnome.SettingsDaemon.@0@.service'.format(plugin_name_case)
 
         unit_conf = configuration_data()
         unit_conf.set('plugin_name', plugin_name)

@@ -1,3 +1,71 @@
+gnome-settings-daemon (49.1-4) unstable; urgency=medium
+
+  * Fix hurd build
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 09 Dec 2025 20:59:41 -0500
+
+gnome-settings-daemon (49.1-3) unstable; urgency=medium
+
+  * Update build options for hurd
+  * Remove unnecessary Build-Depends: libpackagekit-glib2-dev
+  * Remove unnecessary Priority: optional field
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 09 Dec 2025 18:08:58 -0500
+
+gnome-settings-daemon (49.1-2) unstable; urgency=medium
+
+  * Team upload
+  * Release to unstable (transition: #1116394)
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 31 Oct 2025 10:51:28 +0000
+
+gnome-settings-daemon (49.1-1) experimental; urgency=medium
+
+  * Team upload
+
+  [ Simon McVittie ]
+  * New upstream release
+  * d/watch: Update to uscan syntax v5
+  * d/copyright: Don't quote the FSF's former postal address here
+  * d/control: Remove Gunnar Hjalmarsson from Uploaders (Closes: #1069566)
+  * d/control: Remove Rules-Requires-Root, unnecessary since trixie
+
+  [ Alessandro Astone ]
+  * d/maintscript: Remove obsolete autostart desktop files
+
+  [ Guido Günther ]
+  * debian/control: Add breaks on Phosh for dropping backlight handling
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 15 Oct 2025 13:49:31 +0100
+
+gnome-settings-daemon (49.0-1) experimental; urgency=medium
+
+  [ Jeremy Bícha ]
+  * New upstream release
+
+  [ Alessandro Astone ]
+  * debian/control: Add Breaks for dropping org.gnome.SettingsDaemon.Wacom
+  * debian/install: Drop empty etc/xdg/autostart directory
+
+  [ Daniel van Vugt ]
+  * debian/control: Move the Wacom "Breaks" to the common package
+  * debian/control: Add missing build/test dependency on python3-dbusmock
+  * debian/control: Bump requirement to gnome-desktop-4
+  * debian/control: The libcanberra-gtk3 build dep changed to libcanberra
+  * debian/control: Remove build-depends on GTK
+  * debian/control: Remove build-depends on wacom packages
+  * debian/control: Remove build-depends on polkitd
+  * debian: Remove now empty directory: usr/share/polkit-1
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 20 Sep 2025 13:37:06 -0400
+
+gnome-settings-daemon (48.1-2) unstable; urgency=medium
+
+  * Add Recommends: systemd-oomd (Closes: #1111296)
+  * Bump Standards Version to 4.7.2
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 16 Aug 2025 11:17:46 -0400
+
 gnome-settings-daemon (48.1-1) unstable; urgency=medium
 
   * New upstream release (LP: #2105397)

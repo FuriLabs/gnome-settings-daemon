@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*-
+ * vim: set et sw=8 ts=8:
  *
- * Copyright (C) 2007 William Jon McCann <mccann@jhu.edu>
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (c) 2025 GNOME Foundation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,19 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
+ * Authors: Carlos Garnacho <carlosg@gnome.org>
  */
 
-#ifndef __GSD_WACOM_MANAGER_H
-#define __GSD_WACOM_MANAGER_H
+#pragma once
 
-#include "gsd-application.h"
+#include <glib.h>
 
-G_BEGIN_DECLS
+void gsd_donation_reminder_init (void);
 
-#define GSD_TYPE_WACOM_MANAGER         (gsd_wacom_manager_get_type ())
-
-G_DECLARE_FINAL_TYPE (GsdWacomManager, gsd_wacom_manager, GSD, WACOM_MANAGER, GsdApplication)
-
-G_END_DECLS
-
-#endif /* __GSD_WACOM_MANAGER_H */
+void gsd_donation_reminder_end (void);

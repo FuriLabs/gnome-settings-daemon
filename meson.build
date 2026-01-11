@@ -1,8 +1,8 @@
 project(
   'gnome-settings-daemon', 'c',
-  version: '48.1',
+  version: '49.1',
   license: [ 'GPL2+', 'LGPLv2+' ],
-  meson_version: '>= 0.57.0'
+  meson_version: '>= 0.64.0'
 )
 
 # Make sure the version always has a trailing N.0 so that
@@ -36,8 +36,6 @@ gsd_pkgincludedir = join_paths(gsd_includedir, gsd_api_name)
 gsd_pkglibdir = join_paths(gsd_libdir, gsd_api_name)
 
 gsd_schemadir = join_paths(gsd_datadir, 'glib-2.0', 'schemas')
-
-gsd_xdg_autostart = join_paths(gsd_sysconfdir, 'xdg', 'autostart')
 
 gsd_3_0_api_name = '@0@-@1@'.format(meson.project_name(), '3.0')
 gsd_gtk_modules_directory = join_paths(gsd_libdir, gsd_3_0_api_name, 'gtk-modules')
@@ -101,20 +99,15 @@ if not geocode_glib_dep.found()
 endif
 gio_dep = dependency('gio-2.0', version: '>= 2.53.0')
 gio_unix_dep = dependency('gio-unix-2.0')
-gnome_desktop_dep = dependency('gnome-desktop-3.0', version: '>= 3.37.1')
+gnome_desktop_dep = dependency('gnome-desktop-4')
 gsettings_desktop_dep = dependency('gsettings-desktop-schemas', version: '>= 46.beta')
-gtk_dep = dependency('gtk+-3.0', version: '>= 3.15.3')
-gtk_x11_dep = dependency('gtk+-x11-3.0')
 gweather_dep = dependency('gweather4')
-libcanberra_gtk_dep = dependency('libcanberra-gtk3')
+libcanberra_dep = dependency('libcanberra')
 libgeoclue_dep = dependency('libgeoclue-2.0', version: '>= 2.3.1')
 libnotify_dep = dependency('libnotify', version: '>= 0.7.3')
 libpulse_mainloop_glib_dep = dependency('libpulse-mainloop-glib', version: '>= 2.0')
-pango_dep = dependency('pango', version: '>= 1.20.0')
 polkit_gobject_dep = dependency('polkit-gobject-1', version: '>= 0.114')
 upower_glib_dep = dependency('upower-glib', version: '>= 0.99.12')
-x11_dep = dependency('x11')
-xfixes_dep = dependency('xfixes', version: '>= 6.0')
 
 enable_systemd = get_option('systemd')
 enable_elogind = get_option('elogind')
@@ -160,23 +153,6 @@ endif
 has_timerfd_create = cc.has_function('timerfd_create')
 config_h.set10('HAVE_TIMERFD', has_timerfd_create)
 
-# Check for wayland dependencies
-enable_wayland = get_option('wayland')
-if enable_wayland
-  assert(enable_gudev, 'GUDev support is required for wayland support.')
-  wayland_client_dep = dependency('wayland-client')
-  wayland_gdk_dep = dependency('gdk-wayland-3.0')
-endif
-config_h.set10('HAVE_WAYLAND', enable_wayland)
-
-# wacom (disabled for s390/s390x and non Linux platforms)
-enable_wacom = host_is_linux_not_s390
-if enable_wacom
-  assert(enable_gudev, 'GUDev support is required for wacom support.')
-  libwacom_dep = dependency('libwacom', version: '>= 0.7')
-endif
-config_h.set10('HAVE_WACOM', enable_wacom)
-
 # smartcard section
 enable_smartcard = get_option('smartcard')
 if enable_smartcard
@@ -207,6 +183,13 @@ if enable_cups
     compile_args: cups_cflags
   )
   '''
+
+  if cc.has_header('langinfo.h')
+    foreach nl_enum: [ '_NL_PAPER_HEIGHT',
+                       '_NL_PAPER_WIDTH' ]
+      config_h.set('HAVE_' + nl_enum, cc.has_header_symbol('langinfo.h', nl_enum))
+    endforeach
+  endif
 endif
 
 # Rfkill
@@ -249,9 +232,19 @@ if enable_colord
   colord_dep = dependency('colord', version: '>= 1.4.5')
 endif
 
+# xsettings
+enable_xwayland = get_option('xwayland')
+enable_x11 = get_option('x11')
+enable_xsettings = enable_xwayland or enable_x11
+if enable_xsettings
+  x11_dep = dependency('x11')
+  xfixes_dep = dependency('xfixes', version: '>= 6.0')
+endif
+
 gnome = import('gnome')
 i18n = import('i18n')
 pkg = import('pkgconfig')
+fs = import('fs')
 
 po_dir = join_paths(meson.project_source_root(), 'po')
 
@@ -289,8 +282,6 @@ output += '        NetworkManager support:   ' + enable_network_manager.to_strin
 output += '        Smartcard support:        ' + enable_smartcard.to_string() + '\n'
 output += '        USB Protection support:   ' + enable_usb_protection.to_string() + '\n'
 output += '        Cups support:             ' + enable_cups.to_string() + '\n'
-output += '        Wayland support:          ' + enable_wayland.to_string() + '\n'
-output += '        Wacom support:            ' + enable_wacom.to_string() + '\n'
 output += '        RFKill support:           ' + enable_rfkill.to_string() + '\n'
 if enable_systemd
   output += '        Systemd user unit dir:    ' + systemd_userunitdir + '\n'
