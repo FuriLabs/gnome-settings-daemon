@@ -1,3 +1,25 @@
+gnome-settings-daemon (49.1-4ubuntu1) UNRELEASED; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Add Build-Depends: accountsservice
+      - Drop Build-Depends: xserver-xorg-input-wacom
+    + debian/patches/debian:
+      - power-test-Disable-known-broken-test.patch
+    + debian/patches/ubuntu:
+      - keyboard-sync-input-sources-to-accountsservice.patch
+      - keyboard-Use-ibus-sources-from-locale.patch
+      - lid-close-suspend-support.patch
+      - media-keys-restore-terminal-keyboard-shortcut-schema.patch
+      - print-notifications-suppress-printer-may-not-be-connected.patch
+      - teach-gsd-about-the-gnome-calculator-snap-.desktop-name.patch
+    + debian/gnome-settings-daemon.install:
+      - Install apport hook
+    + debian/watch:
+      - Look for alpha releases
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 13 Jan 2026 13:41:44 +0100
+
 gnome-settings-daemon (49.1-4) unstable; urgency=medium
 
   * Fix hurd build
