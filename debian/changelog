@@ -1,4 +1,4 @@
-gnome-settings-daemon (49.1-4ubuntu1) UNRELEASED; urgency=medium
+gnome-settings-daemon (50~alpha-1) UNRELEASED; urgency=medium
 
   * Merge with debian. Remaining changes:
     + debian/control:
@@ -17,8 +17,9 @@ gnome-settings-daemon (49.1-4ubuntu1) UNRELEASED; urgency=medium
       - Install apport hook
     + debian/watch:
       - Look for alpha releases
+  * New upstream release
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 13 Jan 2026 13:41:44 +0100
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 13 Jan 2026 13:57:44 +0100
 
 gnome-settings-daemon (49.1-4) unstable; urgency=medium
 
