@@ -9,7 +9,7 @@ Subject: keyboard: sync input sources to accountsservice
  3 files changed, 88 insertions(+)
 
 diff --git a/meson.build b/meson.build
-index 4a71f9c..1aa060b 100644
+index 1ed7c82..4da339c 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -92,6 +92,7 @@ endif
