@@ -1,4 +1,4 @@
-gnome-settings-daemon (50~alpha-1) UNRELEASED; urgency=medium
+gnome-settings-daemon (50~alpha-0ubuntu1) resolute; urgency=medium
 
   * Merge with debian. Remaining changes:
     + debian/control:
@@ -18,8 +18,11 @@ gnome-settings-daemon (50~alpha-1) UNRELEASED; urgency=medium
     + debian/watch:
       - Look for alpha releases
   * New upstream release
+  * d/p/d/power-test-Disable-known-broken-test.patch: Drop unnecessary patch
+  * d/p/u: Refresh patches
+  * d/control: Add new Build-Depends for the test suite
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 13 Jan 2026 13:57:44 +0100
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 13 Jan 2026 14:52:13 +0100
 
 gnome-settings-daemon (49.1-4) unstable; urgency=medium
 
