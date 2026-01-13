@@ -1,3 +1,43 @@
+gnome-settings-daemon (49.1-4) unstable; urgency=medium
+
+  * Fix hurd build
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 09 Dec 2025 20:59:41 -0500
+
+gnome-settings-daemon (49.1-3) unstable; urgency=medium
+
+  * Update build options for hurd
+  * Remove unnecessary Build-Depends: libpackagekit-glib2-dev
+  * Remove unnecessary Priority: optional field
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 09 Dec 2025 18:08:58 -0500
+
+gnome-settings-daemon (49.1-2) unstable; urgency=medium
+
+  * Team upload
+  * Release to unstable (transition: #1116394)
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 31 Oct 2025 10:51:28 +0000
+
+gnome-settings-daemon (49.1-1) experimental; urgency=medium
+
+  * Team upload
+
+  [ Simon McVittie ]
+  * New upstream release
+  * d/watch: Update to uscan syntax v5
+  * d/copyright: Don't quote the FSF's former postal address here
+  * d/control: Remove Gunnar Hjalmarsson from Uploaders (Closes: #1069566)
+  * d/control: Remove Rules-Requires-Root, unnecessary since trixie
+
+  [ Alessandro Astone ]
+  * d/maintscript: Remove obsolete autostart desktop files
+
+  [ Guido Günther ]
+  * debian/control: Add breaks on Phosh for dropping backlight handling
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 15 Oct 2025 13:49:31 +0100
+
 gnome-settings-daemon (49.0-1ubuntu3) questing; urgency=medium
 
   * d/maintscript: Remove obsolete autostart desktop files

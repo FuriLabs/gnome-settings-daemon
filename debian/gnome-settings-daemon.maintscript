@@ -12,6 +12,6 @@ rm_conffile /etc/xdg/autostart/org.gnome.SettingsDaemon.Sharing.desktop 49.0-1ub
 rm_conffile /etc/xdg/autostart/org.gnome.SettingsDaemon.Smartcard.desktop 49.0-1ubuntu3~
 rm_conffile /etc/xdg/autostart/org.gnome.SettingsDaemon.Sound.desktop 49.0-1ubuntu3~
 rm_conffile /etc/xdg/autostart/org.gnome.SettingsDaemon.UsbProtection.desktop 49.0-1ubuntu3~
+rm_conffile /etc/xdg/autostart/org.gnome.SettingsDaemon.Wacom.desktop 49.0-1ubuntu3~
 rm_conffile /etc/xdg/autostart/org.gnome.SettingsDaemon.Wwan.desktop 49.0-1ubuntu3~
 rm_conffile /etc/xdg/autostart/org.gnome.SettingsDaemon.XSettings.desktop 49.0-1ubuntu3~
-rm_conffile /etc/xdg/autostart/org.gnome.SettingsDaemon.Wacom.desktop 49.0-1ubuntu3~

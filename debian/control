@@ -1,10 +1,8 @@
 Source: gnome-settings-daemon
 Section: gnome
-Priority: optional
 Maintainer: Ubuntu Desktop Team <ubuntu-desktop@lists.ubuntu.com>
 XSBC-Original-Maintainer: Debian GNOME Maintainers <pkg-gnome-maintainers@lists.alioth.debian.org>
 Uploaders: Amin Bandali <bandali@ubuntu.com>,
-           Gunnar Hjalmarsson <gunnarhj@debian.org>,
            Jeremy Bícha <jbicha@ubuntu.com>,
            Laurent Bigonville <bigon@debian.org>,
            Marco Trevisan (Treviño) <marco@ubuntu.com>
@@ -33,7 +31,6 @@ Build-Depends: debhelper-compat (= 13),
                libmm-glib-dev [linux-any],
                libnm-dev [linux-any],
                libnotify-dev,
-               libpackagekit-glib2-dev,
                libpolkit-gobject-1-dev (>= 0.114),
                libpulse-dev,
                libsystemd-dev [linux-any],
@@ -54,7 +51,6 @@ XS-Debian-Vcs-Git: https://salsa.debian.org/gnome-team/gnome-settings-daemon.git
 XS-Debian-Vcs-Browser: https://salsa.debian.org/gnome-team/gnome-settings-daemon
 Vcs-Git: https://salsa.debian.org/gnome-team/gnome-settings-daemon.git -b ubuntu/latest
 Vcs-Browser: https://salsa.debian.org/gnome-team/gnome-settings-daemon/tree/ubuntu/latest
-Rules-Requires-Root: no
 
 Package: gnome-settings-daemon
 Architecture: any
@@ -73,6 +69,7 @@ Recommends: iio-sensor-proxy,
 Suggests: usbguard
 Breaks: gnome-shell (<< 47~rc),
         mutter-common (<< 47~rc),
+        phosh (<< 0.50~rc)
 Description: daemon handling the GNOME session settings
  This package contains the daemon which is responsible for setting the
  various parameters of a GNOME session and the applications that run
@@ -95,8 +92,8 @@ Provides: gnome-settings-daemon-schemas (= ${source:Version})
 Breaks: gdm (<< 49~alpha.1),
         gnome-initial-setup (<< 49~alpha),
         gnome-session (<< 49~alpha.1),
-        ubuntu-session (<< 49~alpha.1),
         gnome-shell (<< 49~alpha.1),
+        ubuntu-session (<< 49~alpha.1)
 Description: daemon handling the GNOME session settings - common files
  This package contains GSettings schemas and other architecture-independent
  files for GNOME Settings Daemon. It is probably not interesting on its own for
@@ -109,8 +106,7 @@ Section: libdevel
 Architecture: any
 Multi-Arch: same
 Depends: libglib2.0-dev,
-         ${misc:Depends},
-         ${shlibs:Depends}
+         ${misc:Depends}
 Description: Headers for building applications communicating with gnome-settings-daemon
  This package contains header files required to build applications that
  communicate with the GNOME settings daemon over D-Bus.
