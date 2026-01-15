@@ -90,6 +90,15 @@
 /* Convert bandwidth to time constant.  Units of constant are microseconds. */
 #define GSD_AMBIENT_TIME_CONSTANT       (G_USEC_PER_SEC * 1.0f / (2.0f * G_PI * GSD_AMBIENT_BANDWIDTH_HZ))
 
+/* How often to send target brightness updates to the shell.
+ * This is currently 10 times a second; but the shell should handle animating
+ * for us in the future so we can drop this value to ~1 time per second. */
+#define GSD_AMBIENT_SEND_UPDATE_INTERVAL (G_USEC_PER_SEC * 0.1f)
+
+/* Normalize against this factor of the current absolute reading.
+ * The value has been chosen arbitrarily but seems to work in practice. */
+#define GSD_AMBIENT_NORMALIZE_CONSTANT (1.5f)
+
 static const gchar introspection_xml[] =
 "<node>"
 "  <interface name='org.gnome.SettingsDaemon.Power.Keyboard'>"
@@ -137,7 +146,6 @@ struct _GsdPowerManager
         gboolean                 screensaver_active;
 
         /* State */
-        gboolean                 lid_is_present;
         gboolean                 lid_is_closed;
         gboolean                 session_is_active;
         gboolean                 screen_blanked;
@@ -168,9 +176,8 @@ struct _GsdPowerManager
         gboolean                 ambient_norm_required;
         gdouble                  ambient_accumulator;
         gdouble                  ambient_norm_value;
-        gdouble                  ambient_percentage_old;
-        gdouble                  ambient_last_absolute;
-        gint64                   ambient_last_time;
+        gint64                   ambient_update_last_time;
+        gint64                   ambient_set_last_time;
 
         /* Power Profiles */
         GDBusProxy              *power_profiles_proxy;
@@ -365,7 +372,9 @@ create_notification (const char *summary,
         notify_notification_set_hint_string (notification, "desktop-entry", "gnome-power-panel");
         notify_notification_set_hint_string (notification, "x-gnome-privacy-scope",
                                              notification_privacy_scope_to_string (privacy_scope));
-        notify_notification_set_hint (notification, "image-path", g_variant_new_string (icon_name));
+        if (icon_name != NULL)
+                notify_notification_set_hint (notification, "image-path",
+                                              g_variant_new_string (icon_name));
         notify_notification_set_urgency (notification, urgency);
         *weak_pointer_location = notification;
         g_object_add_weak_pointer (G_OBJECT (notification),
@@ -1240,7 +1249,7 @@ shell_brightness_set_auto_target_cb (GObject      *source_object,
 
 static void
 shell_brightness_set_auto_target (GsdPowerManager *manager,
-                                  float            target)
+                                  double           target)
 {
         if (!manager->shell_brightness_proxy)
                 return;
@@ -1258,19 +1267,19 @@ shell_brightness_set_dimming_cb (GObject      *source_object,
                                  GAsyncResult *res,
                                  gpointer      user_data)
 {
+        GsdPowerManager *manager = user_data;
         g_autoptr (GVariant) result = NULL;
         g_autoptr (GError) error = NULL;
-        gboolean enable = !!GPOINTER_TO_UINT (user_data);
 
         result = g_dbus_proxy_call_finish (G_DBUS_PROXY (source_object),
                                            res,
                                            &error);
-        if (result)
+        if (result) {
+                manager->ambient_norm_required = TRUE;
                 return;
+        }
 
-        g_warning ("couldn't %s dimming: %s",
-                   enable ? "enable" : "disable",
-                   error->message);
+        g_warning ("couldn't change dimming: %s", error->message);
 }
 
 static void
@@ -1286,7 +1295,7 @@ shell_brightness_set_dimming (GsdPowerManager *manager,
                            G_DBUS_CALL_FLAGS_NONE,
                            -1, NULL,
                            shell_brightness_set_dimming_cb,
-                           GUINT_TO_POINTER (enable));
+                           manager);
 }
 
 static void
@@ -1314,16 +1323,17 @@ light_released_cb (GObject      *source_object,
                    GAsyncResult *res,
                    gpointer      user_data)
 {
+        GsdPowerManager *manager = GSD_POWER_MANAGER (user_data);
         g_autoptr(GError) error = NULL;
         g_autoptr(GVariant) result = NULL;
 
         result = g_dbus_proxy_call_finish (G_DBUS_PROXY (source_object),
                                            res,
                                            &error);
-        if (result == NULL) {
+        if (result == NULL)
                 g_warning ("Release of light sensors failed: %s", error->message);
-                return;
-        }
+
+        shell_brightness_set_auto_target (manager, -1.0);
 }
 
 static gboolean
@@ -1673,20 +1683,23 @@ do_lid_closed_action (GsdPowerManager *manager)
 }
 
 static void
-lid_state_changed_cb (UpClient *client, GParamSpec *pspec, GsdPowerManager *manager)
+logind_proxy_changed_cb (GDBusProxy *proxy,
+                         GVariant   *changed_properties,
+                         GStrv       invalidated_properties,
+                         gpointer    user_data)
 {
+        GsdPowerManager *manager = user_data;
+        g_autoptr(GVariant) lid_closed = NULL;
         gboolean tmp;
 
-        if (!manager->lid_is_present)
-                return;
+        lid_closed = g_dbus_proxy_get_cached_property (proxy, "LidClosed");
+        if (lid_closed == NULL)
+            return;
 
-        /* same lid state */
-        /* FIXME: https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/issues/859 */
-        G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-        tmp = up_client_get_lid_is_closed (manager->up_client);
-        G_GNUC_END_IGNORE_DEPRECATIONS
+        tmp = g_variant_get_boolean (lid_closed);
         if (manager->lid_is_closed == tmp)
                 return;
+
         manager->lid_is_closed = tmp;
         g_debug ("up changed: lid is now %s", tmp ? "closed" : "open");
 
@@ -2266,6 +2279,35 @@ set_temporary_unidle_on_ac (GsdPowerManager *manager,
         }
 }
 
+static gboolean
+should_set_temporary_unidle_on_ac (GsdPowerManager *manager)
+{
+        /* Do not unidle if lid is closed */
+        if (manager->lid_is_closed)
+                return FALSE;
+
+        /* Do not unidle if we are not in an active session */
+        if (! manager->session_is_active)
+                return FALSE;
+
+        /* Unidle is already running, so we will need to reset the timer */
+        if (manager->temporary_unidle_on_ac_id != 0)
+                return TRUE;
+
+        /* Do not unidle if our current state isn't dim or blank */
+        if (manager->current_idle_mode != GSD_POWER_IDLE_MODE_BLANK &&
+            manager->current_idle_mode != GSD_POWER_IDLE_MODE_DIM)
+                return FALSE;
+
+        return TRUE;
+}
+
+static void
+update_temporary_unidle_on_ac (GsdPowerManager *manager)
+{
+        set_temporary_unidle_on_ac(manager, should_set_temporary_unidle_on_ac (manager));
+}
+
 static void
 up_client_on_battery_cb (UpClient *client,
                          GParamSpec *pspec,
@@ -2290,13 +2332,7 @@ up_client_on_battery_cb (UpClient *client,
 
         idle_configure (manager);
 
-        if (manager->lid_is_closed)
-                return;
-
-        if (manager->current_idle_mode == GSD_POWER_IDLE_MODE_BLANK ||
-            manager->current_idle_mode == GSD_POWER_IDLE_MODE_DIM ||
-            manager->temporary_unidle_on_ac_id != 0)
-                set_temporary_unidle_on_ac (manager, TRUE);
+        update_temporary_unidle_on_ac (manager);
 }
 
 static void
@@ -2359,7 +2395,7 @@ handle_screensaver_active (GsdPowerManager *manager,
 static void
 handle_wake_up_screen (GsdPowerManager *manager)
 {
-        set_temporary_unidle_on_ac (manager, TRUE);
+        update_temporary_unidle_on_ac (manager);
 }
 
 static void
@@ -2617,7 +2653,7 @@ idle_triggered_idle_cb (GnomeIdleMonitor *monitor,
                         show_sleep_warning (manager);
                 }
                 if (manager->user_active_id < 1) {
-                        manager->user_active_id = 
+                        manager->user_active_id =
                                 gnome_idle_monitor_add_user_active_watch (manager->idle_monitor,
                                                                           idle_became_active_cb,
                                                                           manager,
@@ -2644,19 +2680,6 @@ idle_became_active_cb (GnomeIdleMonitor *monitor,
 
         idle_set_mode (manager, GSD_POWER_IDLE_MODE_NORMAL);
         manager->user_active_id = 0;
-}
-
-static void
-ch_backlight_renormalize (GsdPowerManager *manager)
-{
-        if (manager->ambient_percentage_old < 0)
-                return;
-        if (manager->ambient_last_absolute < 0)
-                return;
-        manager->ambient_norm_value = manager->ambient_last_absolute /
-                                        (gdouble) manager->ambient_percentage_old;
-        manager->ambient_norm_value *= 100.f;
-        manager->ambient_norm_required = FALSE;
 }
 
 static void
@@ -2921,12 +2944,12 @@ logind_proxy_signal_cb (GDBusProxy  *proxy,
 static void
 iio_proxy_changed (GsdPowerManager *manager)
 {
-        GVariant *val_has = NULL;
-        GVariant *val_als = NULL;
+        g_autoptr (GVariant) val_has = NULL;
+        g_autoptr (GVariant) val_als = NULL;
+        gdouble ambient_last_absolute;
         gdouble brightness;
         gdouble alpha;
         gint64 current_time;
-        gint pc;
 
         /* no display hardware */
         if (!shell_brightness_has_control (manager))
@@ -2939,31 +2962,34 @@ iio_proxy_changed (GsdPowerManager *manager)
         /* get latest results, which do not have to be Lux */
         val_has = g_dbus_proxy_get_cached_property (manager->iio_proxy, "HasAmbientLight");
         if (val_has == NULL || !g_variant_get_boolean (val_has))
-                goto out;
+                return;
         val_als = g_dbus_proxy_get_cached_property (manager->iio_proxy, "LightLevel");
-        if (val_als == NULL || g_variant_get_double (val_als) == 0.0)
-                goto out;
-        manager->ambient_last_absolute = g_variant_get_double (val_als);
-        g_debug ("Read last absolute light level: %f", manager->ambient_last_absolute);
+        if (val_als == NULL || g_variant_get_double (val_als) <= 0.f)
+                return;
+        ambient_last_absolute = g_variant_get_double (val_als);
+        g_debug ("Read absolute light level: %f", ambient_last_absolute);
 
         /* the user has asked to renormalize */
         if (manager->ambient_norm_required) {
-                g_debug ("Renormalizing light level from old light percentage: %.1f%%",
-                         manager->ambient_percentage_old);
-                manager->ambient_accumulator = manager->ambient_percentage_old;
-                ch_backlight_renormalize (manager);
+                g_debug ("Normalizing light level");
+
+                manager->ambient_norm_value = ambient_last_absolute * GSD_AMBIENT_NORMALIZE_CONSTANT;
+                if (manager->ambient_accumulator <= 0.f)
+                        manager->ambient_accumulator = 100.f / GSD_AMBIENT_NORMALIZE_CONSTANT;
+
+                manager->ambient_norm_required = FALSE;
         }
 
         /* time-weighted constant for moving average */
         current_time = g_get_monotonic_time();
-        if (manager->ambient_last_time)
-                alpha = 1.0f / (1.0f + (GSD_AMBIENT_TIME_CONSTANT / (current_time - manager->ambient_last_time)));
+        if (manager->ambient_update_last_time)
+                alpha = 1.0f / (1.0f + (GSD_AMBIENT_TIME_CONSTANT / (current_time - manager->ambient_update_last_time)));
         else
                 alpha = 0.0f;
-        manager->ambient_last_time = current_time;
+        manager->ambient_update_last_time = current_time;
 
         /* calculate exponential weighted moving average */
-        brightness = manager->ambient_last_absolute * 100.f / manager->ambient_norm_value;
+        brightness = ambient_last_absolute * 100.f / manager->ambient_norm_value;
         brightness = MIN (brightness, 100.f);
         brightness = MAX (brightness, 0.f);
 
@@ -2972,20 +2998,16 @@ iio_proxy_changed (GsdPowerManager *manager)
 
         /* no valid readings yet */
         if (manager->ambient_accumulator < 0.f)
-                goto out;
+                return;
 
-        /* set new value */
-        g_debug ("Setting brightness from ambient %.1f%%",
+        g_debug ("Calculated new target brightness from ambient: %.1f%%",
                  manager->ambient_accumulator);
-        pc = manager->ambient_accumulator;
 
-        shell_brightness_set_auto_target (manager, pc / 100);
-
-        /* Assume setting worked. */
-        manager->ambient_percentage_old = pc;
-out:
-        g_clear_pointer (&val_has, g_variant_unref);
-        g_clear_pointer (&val_als, g_variant_unref);
+        if (current_time - manager->ambient_set_last_time >= GSD_AMBIENT_SEND_UPDATE_INTERVAL) {
+                shell_brightness_set_auto_target (manager,
+                                                  manager->ambient_accumulator / 100.0);
+                manager->ambient_set_last_time = current_time;
+        }
 }
 
 static void
@@ -3023,6 +3045,16 @@ iio_proxy_vanished_cb (GDBusConnection *connection,
 {
         GsdPowerManager *manager = GSD_POWER_MANAGER (user_data);
         g_clear_object (&manager->iio_proxy);
+}
+
+static void
+on_brightness_changed_by_user (GsdPowerManager *manager)
+{
+        /* Brightness was changed by the user, we need a new baseline
+         * for the normalization being applied.
+         */
+        g_debug ("User brightness change detected, re-normalizing");
+        manager->ambient_norm_required = TRUE;
 }
 
 static gboolean
@@ -3071,6 +3103,7 @@ static void
 gsd_power_manager_startup (GApplication *app)
 {
         GsdPowerManager *manager = GSD_POWER_MANAGER (app);
+        g_autoptr(GVariant) variant = NULL;
         g_autoptr (GError) error = NULL;
         g_autofree char *chassis_type = NULL;
         g_debug ("Starting power manager");
@@ -3079,12 +3112,11 @@ gsd_power_manager_startup (GApplication *app)
         /* Check whether we are running in a VM */
         manager->is_virtual_machine = gsd_power_is_hardware_a_vm ();
 
-        /* FIXME: https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/issues/859 */
-        G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-        manager->lid_is_present = up_client_get_lid_is_present (manager->up_client);
-        if (manager->lid_is_present)
-                manager->lid_is_closed = up_client_get_lid_is_closed (manager->up_client);
-        G_GNUC_END_IGNORE_DEPRECATIONS
+        variant = g_dbus_proxy_get_cached_property (manager->logind_proxy,
+                                                    "LidClosed");
+        manager->lid_is_closed = variant ? g_variant_get_boolean (variant) : FALSE;
+        g_signal_connect (manager->logind_proxy, "g-properties-changed",
+                          G_CALLBACK (logind_proxy_changed_cb), manager);
 
         chassis_type = gnome_settings_get_chassis_type ();
         if (g_strcmp0 (chassis_type, "tablet") == 0 || g_strcmp0 (chassis_type, "handset") == 0) {
@@ -3108,9 +3140,8 @@ gsd_power_manager_startup (GApplication *app)
         manager->ambient_norm_required = TRUE;
         manager->ambient_accumulator = -1.f;
         manager->ambient_norm_value = -1.f;
-        manager->ambient_percentage_old = -1.f;
-        manager->ambient_last_absolute = -1.f;
-        manager->ambient_last_time = 0;
+        manager->ambient_update_last_time = 0;
+        manager->ambient_set_last_time = 0;
 
         /* Set up a delay inhibitor to be informed about suspend attempts */
         g_signal_connect (manager->logind_proxy, "g-signal",
@@ -3126,15 +3157,12 @@ gsd_power_manager_startup (GApplication *app)
         manager->session_is_active = is_session_active (manager);
 
         /* set up the screens */
-        if (manager->lid_is_present) {
-                manager->display_config =
-                        gnome_settings_bus_get_display_config_proxy ();
+        manager->display_config = gnome_settings_bus_get_display_config_proxy ();
 
-                g_signal_connect_swapped (manager->display_config, "notify::has-external-monitor",
-                                          G_CALLBACK (has_external_monitor_changed), manager);
-                watch_external_monitor ();
-                sync_lid_inhibitor (manager);
-        }
+        g_signal_connect_swapped (manager->display_config, "notify::has-external-monitor",
+                                  G_CALLBACK (has_external_monitor_changed), manager);
+        watch_external_monitor ();
+        sync_lid_inhibitor (manager);
 
         manager->screensaver_proxy = gnome_settings_bus_get_screen_saver_proxy ();
 
@@ -3151,8 +3179,6 @@ gsd_power_manager_startup (GApplication *app)
                           G_CALLBACK (engine_device_added_cb), manager);
         g_signal_connect (manager->up_client, "device-removed",
                           G_CALLBACK (engine_device_removed_cb), manager);
-        g_signal_connect_after (manager->up_client, "notify::lid-is-closed",
-                                G_CALLBACK (lid_state_changed_cb), manager);
         g_signal_connect (manager->up_client, "notify::on-battery",
                           G_CALLBACK (up_client_on_battery_cb), manager);
 
@@ -3193,6 +3219,11 @@ gsd_power_manager_startup (GApplication *app)
                          "dimming and auto brightness is disabled");
                 g_clear_error (&error);
         }
+
+        g_signal_connect_swapped (manager->shell_brightness_proxy,
+                                  "g-signal::BrightnessChanged",
+                                  G_CALLBACK (on_brightness_changed_by_user),
+                                  manager);
 
         manager->devices_array = g_ptr_array_new_with_free_func (g_object_unref);
         manager->devices_notified_ht = g_hash_table_new_full (g_str_hash, g_str_equal,
