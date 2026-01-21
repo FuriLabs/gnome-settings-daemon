@@ -29,7 +29,7 @@
       <description>Specify a time in minutes. Subsequent warnings for a volume will not appear more often than this period.</description>
     </key>
     <key name="donation-reminder-enabled" type="b">
-      <default>true</default>
+      <default>false</default>
       <summary>Whether donation reminders are enabled</summary>
       <description>Enables or disables the low-frequency donation reminder notification.</description>
     </key>
