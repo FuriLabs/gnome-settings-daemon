@@ -132,6 +132,9 @@ gsd_donation_reminder_init (void)
 
 	settings = g_settings_new (DONATE_SCHEMA);
 
+	if (1)
+		return;
+
         if (!g_settings_get_boolean (settings, DONATE_ENABLED_KEY))
                 return;
 
