@@ -3,11 +3,16 @@ gnome-settings-daemon (49.1-5) UNRELEASED; urgency=medium
   * d/watch, d/gbp.conf, d/control: Branch for 49.x.
     The debian/latest branch is now in use for early packaging of GNOME
     50 targeting experimental.
+  * d/patches: Make donation reminder less intrusive.
+    Add patches from upstream gnome-49 branch lowering its urgency setting
+    so that it won't bypass the bypass the do-not-disturb setting or
+    interrupt fullscreen apps. (Helps: #1120511)
   * d/patches/libgvc: Update libgvc to prevent crashes with newer Pipewire.
     This updates it to 47c47a42 (2026-01-23) which is the latest version,
-    and the version currently used in g-s-d's main branch. (Closes: #1126544)
+    and the version currently used in g-s-d's main branch.
+    (Closes: #1126544, #1124666)
 
- -- Simon McVittie <smcv@debian.org>  Wed, 28 Jan 2026 11:17:01 +0000
+ -- Simon McVittie <smcv@debian.org>  Wed, 28 Jan 2026 11:21:53 +0000
 
 gnome-settings-daemon (49.1-4) unstable; urgency=medium
 
