@@ -1,8 +1,16 @@
 gnome-settings-daemon (50~alpha-1) UNRELEASED; urgency=medium
 
+  [ Alessandro Astone ]
   * New upstream release
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 15 Jan 2026 17:57:02 +0100
+  [ Simon McVittie ]
+  * Merge from unstable
+    - d/patches/libgvc: Update libgvc to prevent crashes with newer Pipewire
+      (#1126544, #1124666)
+  * Revert "d/watch, d/gbp.conf, d/control: Branch for 49.x"
+  * d/patches: Drop patches that were included in 50~alpha
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 28 Jan 2026 13:29:41 +0000
 
 gnome-settings-daemon (49.1-5) unstable; urgency=medium
 
