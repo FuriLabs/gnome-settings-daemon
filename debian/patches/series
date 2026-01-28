@@ -1,5 +1,3 @@
-housekeeping-Downgrade-donation-reminder-urgency-to-norma.patch
-housekeeping-Don-t-mark-donation-reminder-notification-as.patch
 libgvc/mixer-control-Fix-typos-and-remove-trailing-whitespace.patch
 libgvc/mixer-control-Use-automatic-cleanup-in-match_stream_with_.patch
 libgvc/mixer-control-Print-port-names-with-profiles.patch
