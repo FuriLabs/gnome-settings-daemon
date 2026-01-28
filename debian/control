@@ -48,7 +48,7 @@ Build-Depends: debhelper-compat (= 13),
                xwayland <!nocheck>,
 Standards-Version: 4.7.2
 Homepage: https://gitlab.gnome.org/GNOME/gnome-settings-daemon
-Vcs-Git: https://salsa.debian.org/gnome-team/gnome-settings-daemon.git -b debian/forky
+Vcs-Git: https://salsa.debian.org/gnome-team/gnome-settings-daemon.git
 Vcs-Browser: https://salsa.debian.org/gnome-team/gnome-settings-daemon
 
 Package: gnome-settings-daemon
