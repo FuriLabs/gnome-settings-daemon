@@ -1,0 +1,33 @@
+From: Felipe Borges <felipeborges@gnome.org>
+Date: Mon, 24 Nov 2025 10:26:14 +0100
+Subject: housekeeping: Don't mark donation reminder notification as transient
+
+When the notification was still marked as critical prior to 54b5d05e,
+setting the transient hint would ensure that it was not showing up in
+the calendar menu, which made sense because it was shown on screen until
+manually closed or interacted with. However now that it is not critical
+anymore, this means the notification disappears after being hovered and
+unhovered, without any other user interaction.
+
+Fixes: 54b5d05e ("housekeeping: Downgrade donation reminder urgency to "normal"")
+
+(cherry picked from commit b39840dee58c28bb4558d2adaf2b84a05bbde3d2)
+
+Co-authored-by: Sebastian Keller <skeller@gnome.org>
+Origin: upstream, 49.2, commit:1c4a484be952c973a1fe6466e032b00610b4cc72
+---
+ plugins/housekeeping/gsd-donation-reminder.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/plugins/housekeeping/gsd-donation-reminder.c b/plugins/housekeeping/gsd-donation-reminder.c
+index f8adf14..dbc20a5 100644
+--- a/plugins/housekeeping/gsd-donation-reminder.c
++++ b/plugins/housekeeping/gsd-donation-reminder.c
+@@ -79,7 +79,6 @@ show_notification (void)
+                           NULL);
+ 
+         notify_notification_set_app_name (notification, _("GNOME"));
+-        notify_notification_set_hint (notification, "transient", g_variant_new_boolean (TRUE));
+         notify_notification_set_urgency (notification, NOTIFY_URGENCY_NORMAL);
+         notify_notification_set_timeout (notification, NOTIFY_EXPIRES_DEFAULT);
+         notify_notification_set_hint_string (notification, "desktop-entry", "gnome-about-panel");
