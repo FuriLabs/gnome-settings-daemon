@@ -1,5 +1,6 @@
-gnome-settings-daemon (49.1-5) UNRELEASED; urgency=medium
+gnome-settings-daemon (49.1-5) unstable; urgency=medium
 
+  * Team upload
   * d/watch, d/gbp.conf, d/control: Branch for 49.x.
     The debian/latest branch is now in use for early packaging of GNOME
     50 targeting experimental.
@@ -12,7 +13,7 @@ gnome-settings-daemon (49.1-5) UNRELEASED; urgency=medium
     and the version currently used in g-s-d's main branch.
     (Closes: #1126544, #1124666)
 
- -- Simon McVittie <smcv@debian.org>  Wed, 28 Jan 2026 11:21:53 +0000
+ -- Simon McVittie <smcv@debian.org>  Wed, 28 Jan 2026 13:26:08 +0000
 
 gnome-settings-daemon (49.1-4) unstable; urgency=medium
 
