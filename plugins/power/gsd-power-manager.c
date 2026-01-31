@@ -235,6 +235,8 @@ static void      engine_device_warning_changed_cb (UpDevice *device, GParamSpec 
 static void      do_power_action_type (GsdPowerManager *manager, GsdPowerActionType action_type);
 static void      uninhibit_lid_switch (GsdPowerManager *manager);
 static void      set_temporary_unidle_on_ac (GsdPowerManager *manager, gboolean enable);
+static void      inhibit_suspend (GsdPowerManager *manager);
+static void      uninhibit_suspend (GsdPowerManager *manager);
 static void      stop_inhibit_lid_switch_timer (GsdPowerManager *manager);
 static void      sync_lid_inhibitor (GsdPowerManager *manager);
 static void      main_battery_or_ups_low_changed (GsdPowerManager *manager, gboolean is_low);
@@ -2398,8 +2400,12 @@ handle_screensaver_active (GsdPowerManager *manager,
                  * and its fade has finished.
                  *
                  * See also idle_configure() */
-                if (active)
+                if (active) {
                         idle_set_mode (manager, GSD_POWER_IDLE_MODE_BLANK);
+                        uninhibit_suspend (manager);
+                } else {
+                        inhibit_suspend (manager);
+                }
         }
 }
 
@@ -2916,10 +2922,18 @@ has_external_monitor_changed (GsdPowerManager *manager)
 static void
 handle_suspend_actions (GsdPowerManager *manager)
 {
+        gboolean do_lock;
+
         /* close any existing notification about idleness */
         notify_close_if_showing (&manager->notification_sleep_warning);
-        disable_monitors (manager);
-        uninhibit_suspend (manager);
+
+        do_lock = g_settings_get_boolean (manager->settings_screensaver,
+                                          "lock-enabled");
+
+        if (!do_lock || manager->screensaver_active) {
+                disable_monitors (manager);
+                uninhibit_suspend (manager);
+        }
 }
 
 static void
