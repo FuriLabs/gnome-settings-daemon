@@ -10,7 +10,7 @@ Subject: print-notifications: suppress printer may not be connected
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/plugins/print-notifications/gsd-print-notifications-manager.c b/plugins/print-notifications/gsd-print-notifications-manager.c
-index 6f899e0..4d51765 100644
+index ed4ed36..ddcb4e9 100644
 --- a/plugins/print-notifications/gsd-print-notifications-manager.c
 +++ b/plugins/print-notifications/gsd-print-notifications-manager.c
 @@ -407,7 +407,7 @@ get_statuses_second (guint i,
@@ -22,7 +22,7 @@ index 6f899e0..4d51765 100644
                          break;
                  case 3:
                          /* Translators: One or more covers on the printer are open (same as in system-config-printer) */
-@@ -612,7 +612,7 @@ process_cups_notification (GsdPrintNotificationsManager *manager,
+@@ -616,7 +616,7 @@ process_cups_notification (GsdPrintNotificationsManager *manager,
          static const char * const reasons[] = {
                  "toner-low",
                  "toner-empty",
@@ -31,7 +31,7 @@ index 6f899e0..4d51765 100644
                  "cover-open",
                  "cups-missing-filter",
                  "door-open",
-@@ -629,7 +629,7 @@ process_cups_notification (GsdPrintNotificationsManager *manager,
+@@ -633,7 +633,7 @@ process_cups_notification (GsdPrintNotificationsManager *manager,
                  /* Translators: The printer has no toner left (same as in system-config-printer) */
                  N_("Toner empty"),
                  /* Translators: The printer is in the process of connecting to a shared network output device (same as in system-config-printer) */
