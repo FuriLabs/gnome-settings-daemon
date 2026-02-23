@@ -29,6 +29,7 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <glib-object.h>
+#include <gio/gdesktopappinfo.h>
 #include <gio/gunixmounts.h>
 #include <gio/gio.h>
 #include <libnotify/notify.h>
@@ -41,7 +42,8 @@
 
 #define CHECK_EVERY_X_SECONDS      60
 
-#define DISK_SPACE_ANALYZER        "baobab"
+#define DISK_SPACE_ANALYZER_DESKTOP_NAME "org.gnome.baobab"
+#define DISK_SPACE_ANALYZER_DESKTOP_ID   DISK_SPACE_ANALYZER_DESKTOP_NAME ".desktop"
 
 #define SETTINGS_HOUSEKEEPING_DIR     "org.gnome.settings-daemon.plugins.housekeeping"
 #define SETTINGS_FREE_PC_NOTIFY_KEY   "free-percent-notify"
@@ -163,15 +165,6 @@ ldsm_mount_has_trash (const char *path)
 }
 
 static void
-ldsm_analyze_path (const gchar *path)
-{
-        const gchar *argv[] = { DISK_SPACE_ANALYZER, path, NULL };
-
-        g_spawn_async (NULL, (gchar **) argv, NULL, G_SPAWN_SEARCH_PATH,
-                        NULL, NULL, NULL, NULL);
-}
-
-static void
 ignore_callback (NotifyNotification *n,
                  const char         *action)
 {
@@ -183,15 +176,52 @@ ignore_callback (NotifyNotification *n,
         notify_notification_close (n, NULL);
 }
 
+typedef struct _ExamineData {
+        GDesktopAppInfo *disk_analyzer_app;
+        char *path;
+} ExamineData;
+
+static void
+examine_data_free (ExamineData *data)
+{
+        g_clear_pointer (&data->path, g_free);
+        g_clear_object (&data->disk_analyzer_app);
+        g_free (data);
+}
+
 static void
 examine_callback (NotifyNotification *n,
                   const char         *action,
-                  const char         *path)
+                  ExamineData        *data)
 {
+        g_autoptr (GAppInfo) app_info = NULL;
+        g_autofree char *commandline = NULL;
+        g_autoptr (GError) error = NULL;
+
         g_assert (action != NULL);
         g_assert (strcmp (action, "examine") == 0);
 
-        ldsm_analyze_path (path);
+        commandline = g_strconcat (g_app_info_get_executable (G_APP_INFO (data->disk_analyzer_app)),
+                                   data->path, NULL);
+
+        g_debug ("Running %s", commandline);
+        app_info = g_app_info_create_from_commandline (commandline,
+                                                       g_app_info_get_name (G_APP_INFO (data->disk_analyzer_app)),
+                                                       G_APP_INFO_CREATE_SUPPORTS_STARTUP_NOTIFICATION,
+                                                       &error);
+        if (app_info) {
+                g_autoptr (GAppLaunchContext) launch_context = NULL;
+
+                launch_context = notify_notification_get_activation_app_launch_context (n);
+
+                if (!g_app_info_launch (app_info, NULL, launch_context, &error)) {
+                        g_warning ("failed to launch %s: %s",
+                                   commandline, error->message);
+                }
+        } else {
+                g_warning ("Failed to create application info for %s: %s",
+                           commandline, error->message);
+        }
 
         notify_notification_close (n, NULL);
 }
@@ -606,8 +636,7 @@ ldsm_notify (const char *summary,
              const char *mount_path,
              gboolean    has_trash)
 {
-        gchar *program;
-        gboolean has_disk_analyzer;
+        g_autoptr (GDesktopAppInfo) disk_analyzer_app = NULL;
 
         /* Don't show a notice if one is already displayed */
         if (notification != NULL)
@@ -619,25 +648,32 @@ ldsm_notify (const char *summary,
                           G_CALLBACK (on_notification_closed),
                           NULL);
 
+        disk_analyzer_app = g_desktop_app_info_new (DISK_SPACE_ANALYZER_DESKTOP_ID);
+
         notify_notification_set_app_name (notification, _("Disk Space"));
         notify_notification_set_hint (notification, "transient", g_variant_new_boolean (TRUE));
         notify_notification_set_urgency (notification, NOTIFY_URGENCY_CRITICAL);
         notify_notification_set_timeout (notification, NOTIFY_EXPIRES_DEFAULT);
-        notify_notification_set_hint_string (notification, "desktop-entry", "org.gnome.baobab");
         notify_notification_set_hint (notification, "image-path", g_variant_new_string ("drive-harddisk-symbolic"));
 
+        if (disk_analyzer_app) {
+                notify_notification_set_app_name (notification,
+                                                  g_app_info_get_display_name (G_APP_INFO (disk_analyzer_app)));
+                notify_notification_set_hint_string (notification, "desktop-entry",
+                                                     DISK_SPACE_ANALYZER_DESKTOP_NAME);
+        }
 
-        program = g_find_program_in_path (DISK_SPACE_ANALYZER);
-        has_disk_analyzer = (program != NULL);
-        g_free (program);
+        if (disk_analyzer_app) {
+                ExamineData *data = g_new0 (ExamineData, 1);
 
-        if (has_disk_analyzer) {
+                data->path = g_strdup (mount_path);
+                data->disk_analyzer_app = g_object_ref (disk_analyzer_app);
                 notify_notification_add_action (notification,
                                                 "examine",
                                                 _("Examine"),
                                                 (NotifyActionCallback) examine_callback,
-                                                g_strdup (mount_path),
-                                                g_free);
+                                                g_steal_pointer (&data),
+                                                (GDestroyNotify) examine_data_free);
         }
 
         if (has_trash) {
