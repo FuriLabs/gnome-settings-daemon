@@ -17,11 +17,13 @@ sources += gnome.gdbus_codegen(
   interface_prefix: 'org.freedesktop.'
 )
 
+cflags += ['-DBINDIR="@0@"'.format(gsd_bindir)]
 sources += main_helper_sources
 
 deps = plugins_deps + [
   geocode_glib_dep,
   gweather_dep,
+  libcommon_dep,
   libgeoclue_dep,
   libnotify_dep,
   m_dep,
@@ -40,3 +42,11 @@ executable(
   install_rpath: gsd_pkglibdir,
   install_dir: gsd_libexecdir
 )
+
+test_tz_parsing = executable('test-tz-parsing',
+  'test-tz-parsing.c',
+  include_directories: [top_inc, include_directories('.')],
+  dependencies: [glib_dep, m_dep],
+  c_args: cflags
+)
+test('test-tz-parsing', test_tz_parsing)

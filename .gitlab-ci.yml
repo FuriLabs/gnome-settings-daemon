@@ -11,8 +11,8 @@ include:
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
-  FDO_DISTRIBUTION_VERSION: 43
-  FDO_DISTRIBUTION_TAG: "x86_64-2025-12-20.0"
+  FDO_DISTRIBUTION_VERSION: rawhide
+  FDO_DISTRIBUTION_TAG: "x86_64-2026-01-07.1"
   FDO_UPSTREAM_REPO: GNOME/gnome-settings-daemon
   # Expiry sets fdo.expires on the image
   FEDORA_IMAGE: "$CI_REGISTRY/$FDO_UPSTREAM_REPO/fedora/$FDO_DISTRIBUTION_VERSION:$FDO_DISTRIBUTION_TAG"
@@ -161,19 +161,7 @@ test: &test
 
   script:
     - *environment_information
-
-    - |
-      if [[ -n "${CI_COMMIT_TAG}" ]]; then
-        *run_tests
-
-        echo "== Distro Test =="
-        mkdir -m 1777 /tmp/.X11-unix
-        ninja dist -C _build
-      else
-        echo "== Testing =="
-        mkdir -m 1777 /tmp/.X11-unix
-        meson test -C _build --verbose --no-stdsplit
-      fi
+    - *run_tests
 
   except:
     variables:
