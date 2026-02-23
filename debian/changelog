@@ -1,3 +1,9 @@
+gnome-settings-daemon (50~beta-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 23 Feb 2026 17:13:18 +0100
+
 gnome-settings-daemon (50~alpha-0ubuntu2) resolute; urgency=medium
 
   * d/p/gvc-Don-t-crash-with-newer-pipewire-and-fix-device-select.patch:
