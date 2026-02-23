@@ -1,8 +1,11 @@
-gnome-settings-daemon (50~beta-1) UNRELEASED; urgency=medium
+gnome-settings-daemon (50~beta-0ubuntu1) resolute; urgency=medium
 
   * New upstream release
+  * d/control: Bump libnotify dependency
+  * d/p: Drop patch applied upstream
+  * d/p: Refresh patches
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 23 Feb 2026 17:13:18 +0100
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 23 Feb 2026 17:32:09 +0100
 
 gnome-settings-daemon (50~alpha-0ubuntu2) resolute; urgency=medium
 
