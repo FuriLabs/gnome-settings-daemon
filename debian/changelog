@@ -1,16 +1,17 @@
-gnome-settings-daemon (50~alpha-1) UNRELEASED; urgency=medium
+gnome-settings-daemon (50~beta-1) UNRELEASED; urgency=medium
 
   [ Alessandro Astone ]
   * New upstream release
+  * d/control: Bump libnotify dependency
+  * d/p: Fix tests against mutter 50~beta
+  * d/tests: Add autopkgtests
 
   [ Simon McVittie ]
   * Merge from unstable
-    - d/patches/libgvc: Update libgvc to prevent crashes with newer Pipewire
-      (#1126544, #1124666)
   * Revert "d/watch, d/gbp.conf, d/control: Branch for 49.x"
   * d/patches: Drop patches that were included in 50~alpha
 
- -- Simon McVittie <smcv@debian.org>  Wed, 28 Jan 2026 13:29:41 +0000
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 26 Feb 2026 23:34:32 +0100
 
 gnome-settings-daemon (49.1-5) unstable; urgency=medium
 
