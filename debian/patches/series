@@ -1,1 +1,2 @@
 debian/01_debianize_xrdb.patch
+tests-Emit-LidIsClosed-on-upower-too.patch

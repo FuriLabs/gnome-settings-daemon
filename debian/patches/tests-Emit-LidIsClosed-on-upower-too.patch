@@ -1,0 +1,26 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Thu, 26 Feb 2026 19:42:35 +0100
+Subject: tests: Emit LidIsClosed on upower too
+
+mutter 50.beta is checking upower instead of logind.
+Fixes the test_unblank_on_lid_open test.
+
+Forwarded: https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/merge_requests/475
+---
+ plugins/power/test.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/plugins/power/test.py b/plugins/power/test.py
+index a084858..7914faf 100755
+--- a/plugins/power/test.py
++++ b/plugins/power/test.py
+@@ -157,6 +157,9 @@ class PowerPluginBase(gsdtestcase.GSDTestCase):
+         self.logind_obj.Set('org.freedesktop.login1.Manager', 'LidClosed', state)
+         self.logind_obj.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
+ 
++        self.obj_upower.Set('org.freedesktop.UPower', 'LidIsClosed', state)
++        self.obj_upower.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
++
+     def set_has_external_monitor(self, external):
+         if external:
+             val = b'1'
