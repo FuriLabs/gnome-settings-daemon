@@ -1,3 +1,10 @@
+gnome-settings-daemon (50~beta-0ubuntu2) resolute; urgency=medium
+
+  * d/p: Fix tests against mutter 50~beta
+  * d/tests: Add autopkgtests
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 26 Feb 2026 21:51:09 +0100
+
 gnome-settings-daemon (50~beta-0ubuntu1) resolute; urgency=medium
 
   * New upstream release
