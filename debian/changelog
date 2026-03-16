@@ -1,8 +1,10 @@
-gnome-settings-daemon (50.0-1) UNRELEASED; urgency=medium
+gnome-settings-daemon (50.0-0ubuntu1) resolute; urgency=medium
 
   * New upstream release
+  * d/p: Drop patch applied upstream
+  * d/p/u: Refresh patches
 
- -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 16 Mar 2026 16:43:43 +0100
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Mon, 16 Mar 2026 16:49:45 +0100
 
 gnome-settings-daemon (50~beta-0ubuntu2) resolute; urgency=medium
 
