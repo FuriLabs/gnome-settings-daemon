@@ -1,4 +1,4 @@
-gnome-settings-daemon (50~beta-1) UNRELEASED; urgency=medium
+gnome-settings-daemon (50.0-1) UNRELEASED; urgency=medium
 
   [ Alessandro Astone ]
   * New upstream release
@@ -7,8 +7,9 @@ gnome-settings-daemon (50~beta-1) UNRELEASED; urgency=medium
   * d/tests: Add autopkgtests
 
   [ Simon McVittie ]
-  * Merge from unstable
-  * Revert "d/watch, d/gbp.conf, d/control: Branch for 49.x"
+  * New upstream release
+  * Merge packaging from unstable
+    - Revert "d/watch, d/gbp.conf, d/control: Branch for 49.x"
   * d/patches: Drop patches that were included in 50~alpha
 
  -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 26 Feb 2026 23:34:32 +0100
