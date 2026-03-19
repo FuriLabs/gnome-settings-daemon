@@ -1,4 +1,6 @@
-gnome-settings-daemon (50.0-1) UNRELEASED; urgency=medium
+gnome-settings-daemon (50.0-1) unstable; urgency=medium
+
+  * Team upload
 
   [ Alessandro Astone ]
   * New upstream release
@@ -6,12 +8,12 @@ gnome-settings-daemon (50.0-1) UNRELEASED; urgency=medium
   * d/tests: Add autopkgtests
 
   [ Simon McVittie ]
-  * New upstream release
-  * Merge packaging from unstable
-    - Revert "d/watch, d/gbp.conf, d/control: Branch for 49.x"
+  * Revert "d/watch, d/gbp.conf, d/control: Branch for 49.x"
+  * (Another) new upstream release
   * d/patches: Drop patches that were included in 50.0
+  * Standards-Version: 4.7.3 (no changes required)
 
- -- Simon McVittie <smcv@debian.org>  Thu, 19 Mar 2026 13:50:30 +0000
+ -- Simon McVittie <smcv@debian.org>  Thu, 19 Mar 2026 16:42:03 +0000
 
 gnome-settings-daemon (49.1-5) unstable; urgency=medium
 
