@@ -1,3 +1,37 @@
+gnome-settings-daemon (50.0-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Alessandro Astone ]
+  * New upstream release
+  * d/control: Bump libnotify dependency
+  * d/tests: Add autopkgtests
+
+  [ Simon McVittie ]
+  * Revert "d/watch, d/gbp.conf, d/control: Branch for 49.x"
+  * (Another) new upstream release
+  * d/patches: Drop patches that were included in 50.0
+  * Standards-Version: 4.7.3 (no changes required)
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 19 Mar 2026 16:42:03 +0000
+
+gnome-settings-daemon (49.1-5) unstable; urgency=medium
+
+  * Team upload
+  * d/watch, d/gbp.conf, d/control: Branch for 49.x.
+    The debian/latest branch is now in use for early packaging of GNOME
+    50 targeting experimental.
+  * d/patches: Make donation reminder less intrusive.
+    Add patches from upstream gnome-49 branch lowering its urgency setting
+    so that it won't bypass the bypass the do-not-disturb setting or
+    interrupt fullscreen apps. (Helps: #1120511)
+  * d/patches/libgvc: Update libgvc to prevent crashes with newer Pipewire.
+    This updates it to 47c47a42 (2026-01-23) which is the latest version,
+    and the version currently used in g-s-d's main branch.
+    (Closes: #1126544, #1124666)
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 28 Jan 2026 13:26:08 +0000
+
 gnome-settings-daemon (50.0-0ubuntu1) resolute; urgency=medium
 
   * New upstream release
