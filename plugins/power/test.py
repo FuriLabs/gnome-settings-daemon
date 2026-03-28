@@ -38,42 +38,8 @@ from gi.repository import Gio
 from gi.repository import GLib
 from gi.repository import UPowerGlib
 
-# There must be a better way to do a version comparison ... but this works
-mutter_version = subprocess.run(['mutter', '--version'], stdout=subprocess.PIPE).stdout.decode().strip()
-assert mutter_version.startswith('mutter ')
-mutter_version = mutter_version[7:].split('.')
 
-def mutter_at_least(version):
-    global mutter_version
-    version = version.split('.')
-
-    for i in range(max(len(mutter_version), len(version))):
-        m = mutter_version[i]
-        try:
-            m = int(m)
-        except:
-            pass
-
-        v = version[i]
-        try:
-            v = int(v)
-        except:
-            pass
-
-        try:
-            if m > v:
-                return True
-            elif m < v:
-                return False
-        except TypeError:
-            # String is smaller than integer
-            if isinstance(m, str):
-                return False
-            else:
-                return True
-
-    # assume equal
-    return True
+_GNOME_SESSION_SERVICE_PATH = '/usr/libexec/gnome-session-service'
 
 def dbusmock_template(name):
     template = (
@@ -98,7 +64,6 @@ class PowerPluginBase(gsdtestcase.GSDTestCase):
         os.environ['GSD_MOCK_EXTERNAL_MONITOR_FILE'] = self.mock_external_monitor_file
         self.addCleanup(self.delete_external_monitor_file)
 
-        self.check_logind_gnome_session()
         self.start_logind()
         self.addCleanup(self.stop_logind)
 
@@ -112,7 +77,7 @@ class PowerPluginBase(gsdtestcase.GSDTestCase):
 
         # start mock upowerd
         (self.upowerd, self.obj_upower) = self.spawn_server_template(
-            'upower', {'DaemonVersion': '0.99', 'OnBattery': True, 'LidIsClosed': False})
+            'upower', {'DaemonVersion': '0.99', 'OnBattery': True})
         self.addCleanup(self.stop_process, self.upowerd)
 
         # start mock gnome-shell screensaver
@@ -176,28 +141,24 @@ class PowerPluginBase(gsdtestcase.GSDTestCase):
         except OSError:
             pass
 
-    def check_logind_gnome_session(self):
-        '''Check that gnome-session is built with logind support'''
-
-        path = GLib.find_program_in_path ('gnome-session')
-        assert(path)
-        (success, data) = GLib.file_get_contents (path)
-        lines = data.split(b'\n')
-        new_path = None
-        for line in lines:
-            items = line.split()
-            if items and items[0] == b'exec':
-                new_path = items[1]
-        if not new_path:
-            self.fail("could not get gnome-session's real path from %s" % path)
-        path = new_path
-        ldd = subprocess.Popen(['ldd', path], stdout=subprocess.PIPE)
-        out = ldd.communicate()[0]
-        if not b'libsystemd.so.0' in out:
-            self.fail('gnome-session is not built with logind support')
-
     def get_status(self):
         return self.obj_session_presence_props.Get('org.gnome.SessionManager.Presence', 'status')
+
+    def set_on_external_power(self, state):
+        # logind does not send PropertiesChanged signal for OnExternalPower:
+        # So use a SetOnExternalPower method on the mock interface instead of Set().
+        logind_mock_intf = dbus.Interface(self.logind_obj, dbusmock.MOCK_IFACE)
+        logind_mock_intf.SetOnExternalPower(state)
+
+        self.obj_upower.Set('org.freedesktop.UPower', 'OnBattery', not state)
+        self.obj_upower.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
+
+    def set_lid_closed(self, state):
+        self.logind_obj.Set('org.freedesktop.login1.Manager', 'LidClosed', state)
+        self.logind_obj.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
+
+        self.obj_upower.Set('org.freedesktop.UPower', 'LidIsClosed', state)
+        self.obj_upower.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
 
     def set_has_external_monitor(self, external):
         if external:
@@ -231,13 +192,13 @@ class PowerPluginBase(gsdtestcase.GSDTestCase):
 
         Fail after the given timeout.
         '''
-        self.session_log.check_line(b'GsmManager: requesting logout', timeout)
+        self.session_log.check_line_re(b'GsmManager: requesting( forced)? logout', timeout)
 
     def check_no_logout(self, seconds):
         '''Check that no logout is requested in the given time'''
 
         # wait for specified time to ensure it didn't do anything
-        self.session_log.check_no_line(b'GsmManager: requesting logout', seconds)
+        self.session_log.check_no_line_re(b'GsmManager: requesting.*logout', seconds)
 
     def check_for_suspend(self, timeout, methods=COMMON_SUSPEND_METHODS):
         '''Check that one of the given suspend methods are requested. Default
@@ -404,13 +365,16 @@ class PowerPluginTestScreensaver(PowerPluginBase):
         # fake user activity and check that the screen is unblanked.
         time.sleep(0.5)
         self.reset_idle_timer()
+        # Wait a bit for shell_brightness_set_dimming to run, as our debug message
+        # is printed before that code runs.
+        time.sleep(0.5)
         self.check_unblank(2)
 
         mock_intf = dbus.Interface(self.obj_gnomeshell, dbusmock.MOCK_IFACE)
         method_calls = mock_intf.GetMethodCalls("SetDimming")
         self.assertEqual(len(method_calls), 1, 'did not call dim')
         _, args = method_calls[-1]
-        self.assertTrue(args[0] == False, 'expected disabled dimming')
+        self.assertFalse(args[0], 'expected disabled dimming')
 
         # Check for no blank before the normal blank timeout
         self.check_no_blank(gsdpowerconstants.SCREENSAVER_TIMEOUT_BLANK - 4)
@@ -573,6 +537,8 @@ class PowerPluginTestLid(PowerPluginBase):
         Gio.Settings.sync()
 
         # create inhibitor
+        # BUG: https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/issues/918
+        # closing the lid triggers suspend even when inhibited.
         inhibit_id = self.obj_session_mgr.Inhibit(
             'testsuite', dbus.UInt32(0), 'for testing',
             dbus.UInt32(gsdpowerenums.GSM_INHIBITOR_FLAG_SUSPEND),
@@ -582,8 +548,7 @@ class PowerPluginTestLid(PowerPluginBase):
         self.check_for_lid_uninhibited(gsdpowerconstants.LID_CLOSE_SAFETY_TIMEOUT + 2)
 
         # Close the lid
-        self.obj_upower.Set('org.freedesktop.UPower', 'LidIsClosed', True)
-        self.obj_upower.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
+        self.set_lid_closed(True)
 
         # Check that we've blanked
         time.sleep(2)
@@ -601,6 +566,8 @@ class PowerPluginTestLid(PowerPluginBase):
         '''Check that we do blank on lid closing, if the machine will not suspend'''
 
         # create inhibitor
+        # BUG: https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/issues/918
+        # closing the lid triggers suspend even when inhibited.
         inhibit_id = self.obj_session_mgr.Inhibit(
             'testsuite', dbus.UInt32(0), 'for testing',
             dbus.UInt32(gsdpowerenums.GSM_INHIBITOR_FLAG_SUSPEND),
@@ -610,8 +577,7 @@ class PowerPluginTestLid(PowerPluginBase):
         self.check_for_lid_uninhibited(gsdpowerconstants.LID_CLOSE_SAFETY_TIMEOUT + 2)
 
         # Close the lid
-        self.obj_upower.Set('org.freedesktop.UPower', 'LidIsClosed', True)
-        self.obj_upower.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
+        self.set_lid_closed(True)
 
         # Check that we've blanked
         self.check_blank(4)
@@ -621,11 +587,12 @@ class PowerPluginTestLid(PowerPluginBase):
                 dbus_interface='org.gnome.SessionManager')
         # At this point logind should suspend for us
 
-    @unittest.skipIf(not mutter_at_least('42.0'), reason="mutter is too old and may be buggy")
     def test_unblank_on_lid_open(self):
         '''Check that we do unblank on lid opening, if the machine will not suspend'''
 
         # create inhibitor
+        # BUG: https://gitlab.gnome.org/GNOME/gnome-settings-daemon/-/issues/918
+        # closing the lid triggers suspend even when inhibited.
         inhibit_id = self.obj_session_mgr.Inhibit(
             'testsuite', dbus.UInt32(0), 'for testing',
             dbus.UInt32(gsdpowerenums.GSM_INHIBITOR_FLAG_SUSPEND),
@@ -635,17 +602,17 @@ class PowerPluginTestLid(PowerPluginBase):
         self.check_for_lid_uninhibited(gsdpowerconstants.LID_CLOSE_SAFETY_TIMEOUT + 2)
 
         # Close the lid
-        self.obj_upower.Set('org.freedesktop.UPower', 'LidIsClosed', True)
-        self.obj_upower.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
+        self.set_lid_closed(True)
+
+        # Give the gsm-presence some time to set up gnome_idle_monitor_add_user_active_watch
+        time.sleep(0.5)
 
         # Check that we've blanked
         self.check_blank(2)
 
         # Reopen the lid
-        self.obj_upower.Set('org.freedesktop.UPower', 'LidIsClosed', False)
-        self.obj_upower.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
+        self.set_lid_closed(False)
 
-        # FIXME: this check fails
         # Check for unblanking
         self.check_unblank(2)
 
@@ -720,8 +687,7 @@ class PowerPluginTestDim(PowerPluginBase):
         self.check_no_lid_uninhibited(gsdpowerconstants.LID_CLOSE_SAFETY_TIMEOUT + 1)
 
         # Close the lid
-        self.obj_upower.Set('org.freedesktop.UPower', 'LidIsClosed', True)
-        self.obj_upower.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
+        self.set_lid_closed(True)
         time.sleep(0.5)
 
         # Unplug the external monitor
@@ -1021,8 +987,12 @@ class PowerPluginTestBrightness(PowerPluginBase):
 
         self.check_suspend_no_hibernate(7)
 
-    def disabled_test_unindle_on_ac_plug(self):
-        idle_delay = round(gsdpowerconstants.MINIMUM_IDLE_DIM_DELAY / gsdpowerconstants.IDLE_DELAY_TO_IDLE_DIM_MULTIPLIER)
+class PowerPluginTestUnidle(PowerPluginBase):
+    def test_unidle_on_ac_plug(self):
+        idle_delay = round(
+            gsdpowerconstants.MINIMUM_IDLE_DIM_DELAY
+            / gsdpowerconstants.IDLE_DELAY_TO_IDLE_DIM_MULTIPLIER
+        )
         self.settings_session['idle-delay'] = idle_delay
         Gio.Settings.sync()
 
@@ -1030,8 +1000,7 @@ class PowerPluginTestBrightness(PowerPluginBase):
         self.check_dim(idle_delay + 2)
 
         # Plug in the AC
-        self.obj_upower.Set('org.freedesktop.UPower', 'OnBattery', False)
-        self.obj_upower.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
+        self.set_on_external_power(True)
 
         # Check that we undim
         self.check_undim(gsdpowerconstants.POWER_UP_TIME_ON_AC / 2)
@@ -1040,14 +1009,95 @@ class PowerPluginTestBrightness(PowerPluginBase):
         self.check_dim(idle_delay + 2)
 
         # Unplug the AC
-        self.obj_upower.Set('org.freedesktop.UPower', 'OnBattery', True)
-        self.obj_upower.EmitSignal('', 'Changed', '', [], dbus_interface='org.freedesktop.DBus.Mock')
+        self.set_on_external_power(False)
 
         # Check that we undim
         self.check_undim(gsdpowerconstants.POWER_UP_TIME_ON_AC / 2)
 
         # And wait a little more to see us dim again
         self.check_dim(idle_delay + 2)
+
+    def test_unidle_timer_reset_on_consecutive_ac_events(self):
+        idle_delay = (
+            round(
+                gsdpowerconstants.MINIMUM_IDLE_DIM_DELAY
+                / gsdpowerconstants.IDLE_DELAY_TO_IDLE_DIM_MULTIPLIER
+            ) + (gsdpowerconstants.POWER_UP_TIME_ON_AC * 2)
+        )
+
+        self.settings_session['idle-delay'] = idle_delay
+        Gio.Settings.sync()
+
+        # Wait for dimming on idle
+        self.check_dim(idle_delay)
+
+        # Plug in the AC
+        self.set_on_external_power(True)
+
+        # Confirm that we undimmed
+        self.check_undim(0.5)
+
+        # Sleep halfway through the timer
+        time.sleep(gsdpowerconstants.POWER_UP_TIME_ON_AC / 2)
+
+        # Unplug the AC
+        self.set_on_external_power(False)
+
+        # Check that we wait for the whole POWER_UP_TIME_ON_AC
+        self.check_no_dim(gsdpowerconstants.POWER_UP_TIME_ON_AC)
+
+        # And wait a little more to see us dim again
+        self.check_dim(gsdpowerconstants.POWER_UP_TIME_ON_AC)
+
+    def test_return_to_idle_canceled_on_activity(self):
+        idle_delay = (
+            round(
+                gsdpowerconstants.MINIMUM_IDLE_DIM_DELAY
+                / gsdpowerconstants.IDLE_DELAY_TO_IDLE_DIM_MULTIPLIER
+            )
+            + gsdpowerconstants.POWER_UP_TIME_ON_AC
+        )
+
+        self.settings_session['idle-delay'] = idle_delay
+        Gio.Settings.sync()
+
+        # Wait for idle
+        self.check_dim(idle_delay + 2)
+
+        # Plug in the AC
+        self.set_on_external_power(True)
+
+        # Check that we unblanked
+        self.check_undim(5)
+
+        # Set active state
+        self.reset_idle_timer()
+
+        # Check that we don't dim after activity
+        self.check_no_dim(gsdpowerconstants.POWER_UP_TIME_ON_AC + 1)
+
+    def test_unidle_on_screensaver_wake_up_signal(self):
+        """https://bugzilla.gnome.org/show_bug.cgi?id=726056"""
+
+        # Lock the screen via screensaver
+        self.obj_screensaver.SetActive(True)
+
+        # Check that we immediately blanked
+        self.check_blank(0.5)
+
+        # Wake up the screen
+        self.obj_screensaver.EmitSignal(
+            '', 'WakeUpScreen', '', [], dbus_interface='org.freedesktop.DBus.Mock'
+        )
+
+        # Check that we unblanked
+        self.check_unblank(5)
+
+        time.sleep(gsdpowerconstants.POWER_UP_TIME_ON_AC)
+
+        # Check that we blanked again
+        self.check_blank(1)
+
 
 class PowerPluginTestBrightnessStep(PowerPluginBase):
     def test_power_saver_on_low_battery(self):
@@ -1077,3 +1127,4 @@ class PowerPluginTestBrightnessStep(PowerPluginBase):
 
 # avoid writing to stderr
 unittest.main(testRunner=unittest.TextTestRunner(stream=sys.stdout, verbosity=2))
+

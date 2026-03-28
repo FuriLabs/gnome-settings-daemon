@@ -107,6 +107,7 @@
 #define SYSTEMD_DBUS_NAME                       "org.freedesktop.login1"
 #define SYSTEMD_DBUS_PATH                       "/org/freedesktop/login1"
 #define SYSTEMD_DBUS_INTERFACE                  "org.freedesktop.login1.Manager"
+#define SD_LOGIND_SKIP_INHIBITORS               (UINT64_C(1) << 4)
 
 #define AUDIO_SELECTION_DBUS_NAME               "org.gnome.Shell.AudioDeviceSelection"
 #define AUDIO_SELECTION_DBUS_PATH               "/org/gnome/Shell/AudioDeviceSelection"
@@ -1391,6 +1392,13 @@ allow_volume_above_100_percent_changed_cb (GSettings           *settings,
 
         allow_volume_above_100_percent = g_settings_get_boolean (settings, settings_key);
         priv->max_volume = allow_volume_above_100_percent ? PA_VOLUME_UI_MAX : PA_VOLUME_NORM;
+        if (priv->sink != NULL) {
+                guint current_vol = gvc_mixer_stream_get_volume (priv->sink);
+                if (current_vol > priv->max_volume) {
+                        gvc_mixer_stream_set_volume (priv->sink, priv->max_volume);
+                        gvc_mixer_stream_push_volume (priv->sink);
+                }
+        }
 }
 
 static void
@@ -1991,16 +1999,41 @@ do_toggle_contrast_action (GsdMediaKeysManager *manager)
 }
 
 static void
-power_action (GsdMediaKeysManager *manager,
-              const char          *action,
-              gboolean             allow_interaction)
+logind_power_action (GsdMediaKeysManager *manager,
+                     GsdPowerActionType   action,
+                     gboolean             allow_interaction)
 {
         GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
+        const char *method;
+        guint64 logind_flags = 0;
+        GDBusCallFlags dbus_flags = G_DBUS_CALL_FLAGS_NONE;
+
+        switch (action) {
+        case GSD_POWER_ACTION_SUSPEND:
+                method = "SuspendWithFlags";
+                logind_flags = SD_LOGIND_SKIP_INHIBITORS;
+                break;
+        case GSD_POWER_ACTION_SHUTDOWN:
+                method = "PowerOffWithFlags";
+                break;
+        case GSD_POWER_ACTION_HIBERNATE:
+                method = "HibernateWithFlags";
+                logind_flags = SD_LOGIND_SKIP_INHIBITORS;
+                break;
+        case GSD_POWER_ACTION_INTERACTIVE:
+        case GSD_POWER_ACTION_BLANK:
+        case GSD_POWER_ACTION_LOGOUT:
+        case GSD_POWER_ACTION_NOTHING:
+                g_assert_not_reached ();
+        }
+
+        if (allow_interaction)
+                dbus_flags = G_DBUS_CALL_FLAGS_ALLOW_INTERACTIVE_AUTHORIZATION;
 
         g_dbus_proxy_call (priv->logind_proxy,
-                           action,
-                           g_variant_new ("(b)", allow_interaction),
-                           G_DBUS_CALL_FLAGS_NONE,
+                           method,
+                           g_variant_new ("(t)", logind_flags),
+                           dbus_flags,
                            G_MAXINT,
                            priv->bus_cancellable,
                            NULL, NULL);
@@ -2013,17 +2046,13 @@ do_config_power_action (GsdMediaKeysManager *manager,
 {
         switch (action_type) {
         case GSD_POWER_ACTION_SUSPEND:
-                power_action (manager, "Suspend", !in_lock_screen);
+        case GSD_POWER_ACTION_SHUTDOWN:
+        case GSD_POWER_ACTION_HIBERNATE:
+                logind_power_action (manager, action_type, !in_lock_screen);
                 break;
         case GSD_POWER_ACTION_INTERACTIVE:
                 if (!in_lock_screen)
                         gnome_session_shutdown (manager);
-                break;
-        case GSD_POWER_ACTION_SHUTDOWN:
-                power_action (manager, "PowerOff", !in_lock_screen);
-                break;
-        case GSD_POWER_ACTION_HIBERNATE:
-                power_action (manager, "Hibernate", !in_lock_screen);
                 break;
         case GSD_POWER_ACTION_BLANK:
         case GSD_POWER_ACTION_LOGOUT:
@@ -2038,11 +2067,24 @@ static gboolean
 supports_power_action (GsdMediaKeysManager *manager,
                        GsdPowerActionType   action_type)
 {
+        static const char *supported_values[] = {
+                "yes", /* Supported, no questions asked */
+                "challenge", /* Supported, but only after Polkit auth */
+                "inhibited", /* "yes", but inhibitor temporarily demands auth */
+                "inhibitor-blocked", /* "yes", but inhibitor blocks */
+                "challenge-inhibitor-blocked", /* "challenge", but inhibitor blocks */
+                NULL
+        };
+        static const char *known_unsupported_values[] = {
+                "no", /* Administrator disabled */
+                "na", /* Entirely unsupported */
+                NULL
+        };
+
         GsdMediaKeysManagerPrivate *priv = GSD_MEDIA_KEYS_MANAGER_GET_PRIVATE (manager);
         const char *method_name = NULL;
         g_autoptr(GVariant) variant = NULL;
         const char *reply;
-        gboolean result = FALSE;
 
         switch (action_type) {
         case GSD_POWER_ACTION_SUSPEND:
@@ -2076,10 +2118,14 @@ supports_power_action (GsdMediaKeysManager *manager,
                 return FALSE;
 
         g_variant_get (variant, "(&s)", &reply);
-        if (g_strcmp0 (reply, "yes") == 0)
-                result = TRUE;
 
-        return result;
+        if (g_strv_contains (supported_values, reply))
+                return TRUE;
+
+        if (!g_strv_contains (known_unsupported_values, reply))
+                g_warning ("%s() returned unknown value: %s", method_name, reply);
+
+        return FALSE;
 }
 
 static void
@@ -2099,7 +2145,7 @@ do_config_power_button_action (GsdMediaKeysManager *manager,
                 g_warning_once ("Virtual machines only honor the 'nothing' power-button-action, and will shutdown otherwise");
 
                 if (action_type != GSD_POWER_BUTTON_ACTION_NOTHING)
-                        power_action (manager, "PowerOff", FALSE);
+                        logind_power_action (manager, GSD_POWER_ACTION_SHUTDOWN, FALSE);
 
                 return;
         }

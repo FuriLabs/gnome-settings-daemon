@@ -35,7 +35,7 @@
 
 /* Forward declarations for private functions */
 
-static float convert_pos (gchar *pos, int digits);
+static gdouble convert_pos (const gchar *pos, gint digits);
 static int compare_country_names (const void *a, const void *b);
 static void sort_locations_by_country (GPtrArray *locations);
 static gchar * tz_data_file_get (void);
@@ -366,25 +366,61 @@ tz_data_file_get (void)
 	return file;
 }
 
-static float
-convert_pos (gchar *pos, int digits)
+static gdouble
+convert_pos (const gchar *pos, gint digits)
 {
-	gchar whole[10];
-	gchar *fraction;
+	gchar whole[11]; /* sign + max digits (9) + null */
+	gdouble deg, min, sec = 0.0;
 	gint i;
-	float t1, t2;
-	
-	if (!pos || strlen(pos) < 4 || digits > 9) return 0.0;
-	
-	for (i = 0; i < digits + 1; i++) whole[i] = pos[i];
+	gboolean is_negative = FALSE;
+
+	/* Safety: Input must be long enough for Degrees + Minutes.
+	 * (+/-) + digits + (minutes=2) = digits + 3 minimum length.
+	 */
+	if (!pos || digits > 9 || strlen (pos) < digits + 3)
+		return 0.0;
+
+	/* Capture sign explicitly to handle -0.0 correctly */
+	if (pos[0] == '-')
+		is_negative = TRUE;
+
+	/* degrees */
+	for (i = 0; i < digits + 1; i++)
+		whole[i] = pos[i];
 	whole[i] = '\0';
-	fraction = pos + digits + 1;
+	deg = g_ascii_strtod (whole, NULL);
 
-	t1 = g_strtod (whole, NULL);
-	t2 = g_strtod (fraction, NULL);
+	/* minutes */
+	pos += digits + 1;
+	for (i = 0; i < 2; i++)
+		whole[i] = pos[i];
+	whole[i] = '\0';
+	min = g_ascii_strtod (whole, NULL);
 
-	if (t1 >= 0.0) return t1 + t2/pow (10.0, strlen(fraction));
-	else return t1 - t2/pow (10.0, strlen(fraction));
+	/* Range validation warning */
+	if (G_UNLIKELY (min < 0.0 || min >= 60.0)) {
+		g_warning ("convert_pos: Invalid minutes value %f (expected 0-59)", min);
+	}
+
+	/* seconds */
+	pos += 2;
+	/* Robust check: Ensure we haven't hit the end of string or next coordinate */
+	if (*pos != '\0' && *pos != '\n' && *pos != '+' && *pos != '-') {
+		sec = g_ascii_strtod (pos, NULL);
+
+		/* Range validation warning */
+		if (G_UNLIKELY (sec < 0.0 || sec >= 60.0)) {
+			g_warning ("convert_pos: Invalid seconds value %f (expected 0-59)", sec);
+		}
+	}
+
+	/* Apply sign to the whole sum, not just using deg.
+	 * If deg is -0.0, we still want -(0 + min + sec)
+	 */
+	if (is_negative)
+		return deg - min / 60.0 - sec / 3600.0;
+	else
+		return deg + min / 60.0 + sec / 3600.0;
 }
 
 

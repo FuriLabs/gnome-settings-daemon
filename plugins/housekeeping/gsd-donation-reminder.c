@@ -53,7 +53,7 @@ donate_cb (NotifyNotification *n)
 
 	g_assert (n == notification);
 
-	context = g_app_launch_context_new ();
+	context = notify_notification_get_activation_app_launch_context (n);
 
 	if (!g_app_info_launch_default_for_uri (DONATE_URL,
 						context,
@@ -79,8 +79,7 @@ show_notification (void)
                           NULL);
 
         notify_notification_set_app_name (notification, _("GNOME"));
-        notify_notification_set_hint (notification, "transient", g_variant_new_boolean (TRUE));
-        notify_notification_set_urgency (notification, NOTIFY_URGENCY_CRITICAL);
+        notify_notification_set_urgency (notification, NOTIFY_URGENCY_NORMAL);
         notify_notification_set_timeout (notification, NOTIFY_EXPIRES_DEFAULT);
         notify_notification_set_hint_string (notification, "desktop-entry", "gnome-about-panel");
 

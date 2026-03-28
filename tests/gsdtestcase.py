@@ -33,8 +33,11 @@ except ImportError:
     sys.stderr.write('You need pygobject and the Gio GIR for this test suite.\n')
     sys.exit(77)
 
-if subprocess.call(['which', 'gnome-session'], stdout=subprocess.DEVNULL) != 0:
-    sys.stderr.write('You need gnome-session for this test suite.\n')
+_GNOME_SESSION_SERVICE_PATH = '/usr/libexec/gnome-session-service'
+_GNOME_SESSION_CTL_PATH = '/usr/libexec/gnome-session-ctl'
+
+if not os.path.isfile(_GNOME_SESSION_SERVICE_PATH) or not os.path.isfile(_GNOME_SESSION_CTL_PATH):
+    sys.stderr.write('You need gnome-session-service and gnome-session-ctl for this test suite.\n')
     sys.exit(77)
 
 
@@ -178,19 +181,43 @@ class GSDTestCase(DBusTestCase):
 
     def start_session(self):
         self.session_log = OutputChecker()
-        self.session = subprocess.Popen(['gnome-session', '-f',
-                                         '-a', os.path.join(self.workdir, 'autostart'),
-                                         '--session=dummy', '--debug'],
-                                        stdout=self.session_log.fd,
-                                        stderr=subprocess.STDOUT)
+        self.session = subprocess.Popen(
+            [
+                _GNOME_SESSION_SERVICE_PATH,
+                os.path.join(self.workdir, 'autostart'),
+                '--session=dummy',
+            ],
+            stdout=self.session_log.fd,
+            stderr=subprocess.STDOUT,
+        )
         self.session_log.writer_attached()
 
         # wait until the daemon is on the bus
-        self.wait_for_bus_object('org.gnome.SessionManager',
-                                 '/org/gnome/SessionManager',
-                                 timeout=100)
+        self.wait_for_bus_object(
+            'org.gnome.SessionManager', '/org/gnome/SessionManager', timeout=100
+        )
 
-        self.session_log.check_line(b'fill: *** Done adding required components')
+        # signal to gnome-session that it has initialized, tests rely on the
+        # session being active.
+        subprocess.run([_GNOME_SESSION_CTL_PATH, '--signal-init'], check=True)
+
+        # and now wait for the session to become active
+        session_manager = self.session_bus_con.get_object(
+            'org.gnome.SessionManager', '/org/gnome/SessionManager'
+        )
+
+        timeout = 100
+        while timeout > 0:
+            if session_manager.IsSessionRunning(
+                dbus_interface='org.gnome.SessionManager'
+            ):
+                break
+
+            timeout -= 1
+            time.sleep(0.1)
+
+        if timeout <= 0:
+            assert timeout > 0, 'timed out waiting for the session to run'
 
     def stop_session(self):
         '''Stop GNOME session'''
@@ -236,12 +263,26 @@ class GSDTestCase(DBusTestCase):
                                                                   stdout=self.logind_log.fd)
         self.logind_log.writer_attached()
 
-        # Monkey patch SuspendThenHibernate functions in for dbusmock <= 0.17.2
-        # This should be removed once we can depend on dbusmock 0.17.3
-        self.logind_obj.AddMethod('org.freedesktop.login1.Manager', 'SuspendThenHibernate', 'b', '', '')
-        self.logind_obj.AddMethod('org.freedesktop.login1.Manager', 'CanSuspendThenHibernate', '', 's', 'ret = "%s"' % parameters.get('CanSuspendThenHibernate', 'yes'))
-
-        self.logind_obj.AddMethod('org.freedesktop.login1.Session', 'SetBrightness', 'ssu', '', '')
+        # Add logind methods not available in dbusmock
+        self.logind_obj.AddMethod(
+            'org.freedesktop.login1.Session', 'SetBrightness', 'ssu', '', ''
+        )
+        self.logind_obj.AddProperty(
+            'org.freedesktop.login1.Manager', 'LidClosed', False
+        )
+        self.logind_obj.AddProperty(
+            'org.freedesktop.login1.Manager', 'OnExternalPower', False
+        )
+        # logind does not send PropertiesChanged signal for OnExternalPower:
+        # https://www.freedesktop.org/software/systemd/man/latest/org.freedesktop.login1.html
+        #     @org.freedesktop.DBus.Property.EmitsChangedSignal("false")
+        #     readonly b OnExternalPower = ...;
+        #
+        # So use a SetOnExternalPower method on the mock interface instead of Set().
+        self.logind_obj.AddMethod(
+            dbusmock.MOCK_IFACE, 'SetOnExternalPower', 'b', '',
+            'self.props["org.freedesktop.login1.Manager"]["OnExternalPower"] = args[0]'
+        )
 
     def stop_logind(self):
         '''stop mock logind'''

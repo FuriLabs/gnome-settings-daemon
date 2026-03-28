@@ -8,6 +8,7 @@ Uploaders: Amin Bandali <bandali@ubuntu.com>,
 Build-Depends: debhelper-compat (= 13),
                dh-exec,
                dh-sequence-gnome,
+               gnome-session-bin <!nocheck>,
                gsettings-desktop-schemas-dev (>= 46~beta),
                intltool,
                libasound2-dev [linux-any],
@@ -28,7 +29,7 @@ Build-Depends: debhelper-compat (= 13),
                liblcms2-dev,
                libmm-glib-dev [linux-any],
                libnm-dev [linux-any],
-               libnotify-dev,
+               libnotify-dev (>= 0.8.7),
                libpolkit-gobject-1-dev (>= 0.114),
                libpulse-dev,
                libsystemd-dev [linux-any],
@@ -39,12 +40,13 @@ Build-Depends: debhelper-compat (= 13),
                libxi-dev,
                libxt-dev,
                meson,
+               mutter <!nocheck>,
                python3-dbusmock <!nocheck>,
                python3-gi <!nocheck>,
                systemd-dev [linux-any],
                xkb-data,
-               xserver-xorg-input-wacom [!hurd-any !s390x]
-Standards-Version: 4.7.2
+               xwayland <!nocheck>,
+Standards-Version: 4.7.3
 Homepage: https://gitlab.gnome.org/GNOME/gnome-settings-daemon
 Vcs-Git: https://salsa.debian.org/gnome-team/gnome-settings-daemon.git
 Vcs-Browser: https://salsa.debian.org/gnome-team/gnome-settings-daemon
