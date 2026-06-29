@@ -99,6 +99,8 @@
  * The value has been chosen arbitrarily but seems to work in practice. */
 #define GSD_AMBIENT_NORMALIZE_CONSTANT (1.5f)
 
+#define GSD_OVERLAPPING_SLEEP_WARNING_SEPARATION 30 /* Seconds */
+
 static const gchar introspection_xml[] =
 "<node>"
 "  <interface name='org.gnome.SettingsDaemon.Power.Keyboard'>"
@@ -2097,53 +2099,6 @@ idle_configure (GsdPowerManager *manager)
         clear_idle_watch (manager->idle_monitor,
                           &manager->idle_sleep_warning_id);
 
-        /* don't do any power saving if we're a VM */
-        if (manager->is_virtual_machine &&
-            (action_type == GSD_POWER_ACTION_SUSPEND ||
-             action_type == GSD_POWER_ACTION_HIBERNATE)) {
-                g_debug ("Ignoring sleep timeout with suspend action inside VM");
-                timeout_sleep = 0;
-        }
-
-        /* don't do any automatic logout if we are in GDM */
-        if (g_getenv ("RUNNING_UNDER_GDM") &&
-            (action_type == GSD_POWER_ACTION_LOGOUT)) {
-                g_debug ("Ignoring sleep timeout with logout action inside GDM");
-                timeout_sleep = 0;
-        }
-
-        if (timeout_sleep != 0) {
-                g_debug ("setting up sleep callback %is", timeout_sleep);
-
-                if (action_type != GSD_POWER_ACTION_NOTHING) {
-                        manager->idle_sleep_id = gnome_idle_monitor_add_idle_watch (manager->idle_monitor,
-                                                                                          timeout_sleep * 1000,
-                                                                                          idle_triggered_idle_cb, manager, NULL);
-                }
-
-                if (action_type == GSD_POWER_ACTION_LOGOUT ||
-                    action_type == GSD_POWER_ACTION_SUSPEND ||
-                    action_type == GSD_POWER_ACTION_HIBERNATE) {
-                        guint timeout_sleep_warning_msec;
-
-                        manager->sleep_action_type = action_type;
-                        timeout_sleep_warning_msec = timeout_sleep * IDLE_DELAY_TO_IDLE_DIM_MULTIPLIER * 1000;
-                        if (timeout_sleep_warning_msec * 1000 < MINIMUM_IDLE_DIM_DELAY) {
-                                /* 0 is not a valid idle timeout */
-                                timeout_sleep_warning_msec = 1;
-                        }
-
-                        g_debug ("setting up sleep warning callback %i msec", timeout_sleep_warning_msec);
-
-                        manager->idle_sleep_warning_id = gnome_idle_monitor_add_idle_watch (manager->idle_monitor,
-                                                                                                  timeout_sleep_warning_msec,
-                                                                                                  idle_triggered_idle_cb, manager, NULL);
-                }
-        }
-
-        if (manager->idle_sleep_warning_id == 0)
-                notify_close_if_showing (&manager->notification_sleep_warning);
-
         /* set up dim callback for when the screen lock is not active,
          * but only if we actually want to dim. */
         timeout_dim = 0;
@@ -2169,6 +2124,62 @@ idle_configure (GsdPowerManager *manager)
                 }
         }
 
+        /* don't do any power saving if we're a VM */
+        if (manager->is_virtual_machine &&
+            (action_type == GSD_POWER_ACTION_SUSPEND ||
+             action_type == GSD_POWER_ACTION_HIBERNATE)) {
+                g_debug ("Ignoring sleep timeout with suspend action inside VM");
+                timeout_sleep = 0;
+        }
+
+        /* don't do any automatic logout if we are in GDM */
+        if (g_getenv ("RUNNING_UNDER_GDM") &&
+            (action_type == GSD_POWER_ACTION_LOGOUT)) {
+                g_debug ("Ignoring sleep timeout with logout action inside GDM");
+                timeout_sleep = 0;
+        }
+
+        if (timeout_sleep != 0) {
+                g_debug ("setting up sleep callback %is", timeout_sleep);
+
+                if (action_type != GSD_POWER_ACTION_NOTHING) {
+                        manager->idle_sleep_id = gnome_idle_monitor_add_idle_watch (manager->idle_monitor,
+                                                                                    timeout_sleep * 1000,
+                                                                                    idle_triggered_idle_cb, manager, NULL);
+                }
+
+                if (action_type == GSD_POWER_ACTION_LOGOUT ||
+                    action_type == GSD_POWER_ACTION_SUSPEND ||
+                    action_type == GSD_POWER_ACTION_HIBERNATE) {
+                        guint timeout_sleep_warning;
+
+                        manager->sleep_action_type = action_type;
+                        timeout_sleep_warning = timeout_sleep * IDLE_DELAY_TO_IDLE_DIM_MULTIPLIER;
+
+                        if (timeout_dim != 0 && timeout_sleep_warning == timeout_dim) {
+                                /* If both timeouts overlap, schedule the sleep notification a bit earlier */
+                                timeout_sleep_warning =
+                                        (timeout_sleep_warning > GSD_OVERLAPPING_SLEEP_WARNING_SEPARATION) ?
+                                        timeout_sleep_warning - GSD_OVERLAPPING_SLEEP_WARNING_SEPARATION :
+                                        timeout_dim * IDLE_DELAY_TO_IDLE_DIM_MULTIPLIER;
+                        }
+
+                        if (timeout_sleep_warning < MINIMUM_IDLE_DIM_DELAY) {
+                                /* 0 is not a valid idle timeout */
+                                timeout_sleep_warning = 1;
+                        }
+
+                        g_debug ("setting up sleep warning callback %i msec", timeout_sleep_warning * 1000);
+
+                        manager->idle_sleep_warning_id = gnome_idle_monitor_add_idle_watch (manager->idle_monitor,
+                                                                                            timeout_sleep_warning * 1000,
+                                                                                            idle_triggered_idle_cb, manager, NULL);
+                }
+        }
+
+        if (manager->idle_sleep_warning_id == 0)
+                notify_close_if_showing (&manager->notification_sleep_warning);
+
         clear_idle_watch (manager->idle_monitor,
                           &manager->idle_dim_id);
 
@@ -2176,8 +2187,8 @@ idle_configure (GsdPowerManager *manager)
                 g_debug ("setting up dim callback for %is", timeout_dim);
 
                 manager->idle_dim_id = gnome_idle_monitor_add_idle_watch (manager->idle_monitor,
-                                                                                timeout_dim * 1000,
-                                                                                idle_triggered_idle_cb, manager, NULL);
+                                                                          timeout_dim * 1000,
+                                                                          idle_triggered_idle_cb, manager, NULL);
         }
 }
 
