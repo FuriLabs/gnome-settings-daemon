@@ -1,4 +1,4 @@
-gnome-settings-daemon (51~alpha-1) stonking; urgency=medium
+gnome-settings-daemon (51~alpha-1ubuntu1) stonking; urgency=medium
 
   * Merge with debian. Remaining changes:
     + debian/control:
