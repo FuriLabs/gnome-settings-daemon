@@ -1,4 +1,4 @@
-gnome-settings-daemon (51~beta-1ubuntu1) UNRELEASED; urgency=medium
+gnome-settings-daemon (51~beta-1ubuntu1) stonking; urgency=medium
 
   * Merge with debian. Remaining changes:
     + debian/control:
@@ -16,7 +16,7 @@ gnome-settings-daemon (51~beta-1ubuntu1) UNRELEASED; urgency=medium
       - Look for alpha releases
   * New upstream release 51.beta
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 12 Aug 2026 00:57:41 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 12 Aug 2026 01:08:26 +0200
 
 gnome-settings-daemon (51~beta-1) unstable; urgency=medium
 
