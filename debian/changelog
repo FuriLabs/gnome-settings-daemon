@@ -1,3 +1,23 @@
+gnome-settings-daemon (51~beta-1ubuntu1) UNRELEASED; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Add Build-Depends: accountsservice
+    + debian/patches/ubuntu:
+      - keyboard-sync-input-sources-to-accountsservice.patch
+      - keyboard-Use-ibus-sources-from-locale.patch
+      - lid-close-suspend-support.patch
+      - media-keys-restore-terminal-keyboard-shortcut-schema.patch
+      - print-notifications-suppress-printer-may-not-be-connected.patch
+      - teach-gsd-about-the-gnome-calculator-snap-.desktop-name.patch
+    + debian/gnome-settings-daemon.install:
+      - Install apport hook
+    + debian/watch:
+      - Look for alpha releases
+  * New upstream release 51.beta
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 12 Aug 2026 00:57:41 +0200
+
 gnome-settings-daemon (51~beta-1) unstable; urgency=medium
 
   * New upstream release
