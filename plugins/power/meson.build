@@ -91,6 +91,7 @@ envs = environment()
 #envs.prepend('G_DEBUG', 'fatal-warnings')
 envs.set('BUILDDIR', meson.current_build_dir())
 envs.set('TOP_BUILDDIR', meson.project_build_root())
+envs.set('GSD_TEST_PREFIX', gsd_prefix)
 envs.set('NO_AT_BRIDGE', '1')
 
 tests = [

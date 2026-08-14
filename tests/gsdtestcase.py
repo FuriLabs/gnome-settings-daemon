@@ -33,8 +33,16 @@ except ImportError:
     sys.stderr.write('You need pygobject and the Gio GIR for this test suite.\n')
     sys.exit(77)
 
-_GNOME_SESSION_SERVICE_PATH = '/usr/libexec/gnome-session-service'
-_GNOME_SESSION_CTL_PATH = '/usr/libexec/gnome-session-ctl'
+def _gnome_session_libexec(binary):
+    prefix = os.environ.get('GSD_TEST_PREFIX', '/usr')
+    path = os.path.join(prefix, 'libexec', binary)
+    if os.path.exists(path):
+        return path
+    return os.path.join('/usr', 'libexec', binary)
+
+
+_GNOME_SESSION_SERVICE_PATH = _gnome_session_libexec('gnome-session-service')
+_GNOME_SESSION_CTL_PATH = _gnome_session_libexec('gnome-session-ctl')
 
 if not os.path.isfile(_GNOME_SESSION_SERVICE_PATH) or not os.path.isfile(_GNOME_SESSION_CTL_PATH):
     sys.stderr.write('You need gnome-session-service and gnome-session-ctl for this test suite.\n')
