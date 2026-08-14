@@ -8,6 +8,7 @@ import subprocess
 import time
 import os
 import os.path
+import pwd
 import tempfile
 import fcntl
 import shutil
@@ -25,6 +26,7 @@ except ImportError:
     sys.stderr.write('You need python-dbusmock (http://pypi.python.org/pypi/python-dbusmock) for this test suite.\n')
     sys.exit(77)
 
+import dbus
 from dbusmock import DBusTestCase
 
 try:
@@ -294,6 +296,36 @@ class GSDTestCase(DBusTestCase):
             dbusmock.MOCK_IFACE, 'SetOnExternalPower', 'b', '',
             'self.props["org.freedesktop.login1.Manager"]["OnExternalPower"] = args[0]'
         )
+
+        # gnome-session (gsm-systemd) finds the graphical session over D-Bus by
+        # reading the "Display" property of the "user/self" logind object,
+        # which points at the user's primary graphical session. It then reads
+        # that session's "Active" property to decide whether the session is
+        # active (SessionIsActive), which several tests rely on.
+        #
+        # Provide an active session and a "user/self" object whose "Display"
+        # points at it, so that gnome-session considers the session active.
+        session_id = 'gsdtest'
+        session_path = self.logind_obj.AddSession(
+            session_id, 'seat0',
+            os.getuid(), pwd.getpwuid(os.getuid()).pw_name,
+            True,
+            dbus_interface=dbusmock.MOCK_IFACE)
+
+        self.logind_obj.AddObject(
+            '/org/freedesktop/login1/user/self',
+            'org.freedesktop.login1.User',
+            {
+                'Display': dbus.Struct(
+                    (session_id, dbus.ObjectPath(session_path)),
+                    signature='so'),
+                'Sessions': dbus.Array(
+                    [(session_id, dbus.ObjectPath(session_path))],
+                    signature='(so)'),
+                'State': 'active',
+            },
+            [],
+            dbus_interface=dbusmock.MOCK_IFACE)
 
     def stop_logind(self):
         '''stop mock logind'''
