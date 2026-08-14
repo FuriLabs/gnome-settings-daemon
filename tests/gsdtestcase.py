@@ -73,6 +73,9 @@ class GSDTestCase(DBusTestCase):
         os.environ['GIO_USE_VFS'] = 'local'
         os.environ['GVFS_DISABLE_FUSE'] = '1'
         # we do some string checks, disable translations
+        os.environ.pop('LC_ALL', None)
+        os.environ.pop('LANGUAGE', None)
+        os.environ['LANG'] = 'C.UTF-8'
         os.environ['LC_MESSAGES'] = 'C'
         klass.workdir = tempfile.mkdtemp(prefix='gsd-plugin-test')
         klass.addClassCleanup(shutil.rmtree, klass.workdir)
