@@ -168,6 +168,8 @@ test: &test
 
   extends:
     - .fdo.distribution-image@fedora
+  variables:
+    GSD_TEST_NEVER_SKIP: true
   image:
     name: ${FDO_DISTRIBUTION_IMAGE}
   needs:
@@ -191,6 +193,8 @@ dist:
   stage: test
   extends:
     - .fdo.distribution-image@fedora
+  variables:
+    GSD_TEST_NEVER_SKIP: true
   needs:
     - build-fedora-container@x86_64
   script:

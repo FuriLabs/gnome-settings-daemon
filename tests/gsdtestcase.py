@@ -20,11 +20,14 @@ from output_checker import OutputChecker
 
 from gi.repository import GLib
 
+def maybe_skip_test():
+    sys.exit(77 if not os.getenv('GSD_TEST_NEVER_SKIP') else 1)
+
 try:
     import dbusmock
 except ImportError:
     sys.stderr.write('You need python-dbusmock (http://pypi.python.org/pypi/python-dbusmock) for this test suite.\n')
-    sys.exit(77)
+    maybe_skip_test()
 
 import dbus
 from dbusmock import DBusTestCase
@@ -33,7 +36,7 @@ try:
     from gi.repository import Gio
 except ImportError:
     sys.stderr.write('You need pygobject and the Gio GIR for this test suite.\n')
-    sys.exit(77)
+    maybe_skip_test()
 
 def _gnome_session_libexec(binary):
     prefix = os.environ.get('GSD_TEST_PREFIX', '/usr')
@@ -48,7 +51,7 @@ _GNOME_SESSION_CTL_PATH = _gnome_session_libexec('gnome-session-ctl')
 
 if not os.path.isfile(_GNOME_SESSION_SERVICE_PATH) or not os.path.isfile(_GNOME_SESSION_CTL_PATH):
     sys.stderr.write('You need gnome-session-service and gnome-session-ctl for this test suite.\n')
-    sys.exit(77)
+    maybe_skip_test()
 
 
 top_builddir = os.environ.get('TOP_BUILDDIR',
