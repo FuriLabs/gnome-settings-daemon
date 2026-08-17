@@ -25,7 +25,7 @@ deps = plugins_deps + [
 
 cflags += ['-DGTK_MODULES_DIRECTORY="@0@"'.format(gsd_gtk_modules_directory)]
 
-executable(
+gsd_xsettings = executable(
   'gsd-' + plugin_name,
   sources,
   include_directories: [top_inc, common_inc],
@@ -42,8 +42,9 @@ programs = [
   ['test-wm-button-layout-translations', wm_button_layout_translation + ['test-wm-button-layout-translations.c'], []]
 ]
 
+xsettings_programs = [gsd_xsettings]
 foreach program: programs
-  executable(
+  xsettings_programs += executable(
     program[0],
     program[1],
     include_directories: top_inc,
@@ -69,5 +70,9 @@ test(
   'test-xsettings',
   test_py,
   env: envs,
+  depends: [
+    xsettings_programs,
+    compiled_schemas,
+  ],
   timeout: 300
 )
