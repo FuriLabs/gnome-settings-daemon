@@ -1,3 +1,10 @@
+gnome-settings-daemon (51~beta-2ubuntu2) UNRELEASED; urgency=medium
+
+  * d/p: Mock GetSessionByPID to please gnome-session
+  * debian/control: Add versioned test dependency on gnome-session
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 17 Aug 2026 12:54:50 +0200
+
 gnome-settings-daemon (51~beta-2ubuntu1) stonking; urgency=medium
 
   * Merge with debian. Remaining changes:
