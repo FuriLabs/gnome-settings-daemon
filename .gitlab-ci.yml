@@ -76,10 +76,13 @@ stages:
   build-aux/ci/ci-helper.sh "INFO" &&
   build-aux/ci/ci-helper.sh "GIT_INFO"
 
+.Setup procedure: &setup_procedure
+  echo "== Setup ==" &&
+  rm -rf _build/ &&
+  meson setup --werror . _build ${BUILD_OPTS}
+
 .Build procedure: &build_procedure
   echo "== Building ==" &&
-  rm -rf _build/ &&
-  meson setup --werror . _build ${BUILD_OPTS} &&
   meson compile -C _build 2>&1 | tee compilation.log
 
 .Run Tests: &run_tests
@@ -133,6 +136,7 @@ build: &build
 
   script:
     - *environment_information
+    - *setup_procedure
     - *build_procedure
 
     - echo "== Installing =="
@@ -191,7 +195,6 @@ dist:
     - build-fedora-container@x86_64
   script:
     - meson setup build
-    - meson compile -C build
     - meson dist -C build
   artifacts:
     expose_as: 'Tarball'
@@ -220,7 +223,7 @@ coverage:
 
   script:
     - *environment_information
-    - *build_procedure
+    - *setup_procedure
     - *run_tests
 
     - ninja -C _build coverage-html
@@ -264,7 +267,7 @@ pages:
   when: manual
   script:
     - *environment_information
-    - *build_procedure
+    - *setup_procedure
     - *run_tests
   extends:
     - .fdo.distribution-image@fedora
