@@ -2,6 +2,7 @@ debian/01_debianize_xrdb.patch
 tests-Force-C-locale-by-unsetting-LC_ALL.patch
 tests-Make-mock-logind-report-the-session-as-active.patch
 tests-Fix-Backlight-property-type-in-mutter-mock.patch
+tests-Answer-GetSessionByPID-in-mock-logind.patch
 ubuntu/print-notifications-suppress-printer-may-not-be-connected.patch
 ubuntu/keyboard-sync-input-sources-to-accountsservice.patch
 ubuntu/media-keys-restore-terminal-keyboard-shortcut-schema.patch

@@ -1,0 +1,41 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Mon, 17 Aug 2026 12:24:08 +0200
+Subject: tests: Answer GetSessionByPID in mock logind
+
+gnome-session falls back to logind's GetSessionByPID() over D-Bus when
+it cannot find a session via libsystemd, which happens in environments
+without a real logind session such as build sandboxes. Without a reply
+the session is treated as inactive and gsd-power refuses idle/blank
+transitions, making the power tests time out.
+
+Override GetSessionByPID() in the mock logind to lazily create and
+return an active session, mirroring the existing GetSession() override,
+so the session is considered active regardless of the host environment.
+---
+ tests/gsdtestcase.py | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/tests/gsdtestcase.py b/tests/gsdtestcase.py
+index 2ab6396..1e9fa22 100644
+--- a/tests/gsdtestcase.py
++++ b/tests/gsdtestcase.py
+@@ -310,6 +310,19 @@ class GSDTestCase(DBusTestCase):
+             % (os.getuid(), os.environ.get('USER', 'user'))
+         )
+ 
++        # In environments without a real logind session (e.g. build sandboxes),
++        # gnome-session cannot find a session via libsystemd and falls back to
++        # logind's GetSessionByPID() over D-Bus. Answer it with the same lazily
++        # created active session so that the session is still considered active.
++        self.logind_obj.AddMethod(
++            'org.freedesktop.login1.Manager', 'GetSessionByPID', 'u', 'o',
++            'session_path = "/org/freedesktop/login1/session/self"\n'
++            'if session_path not in objects:\n'
++            '    self.AddSession("self", "seat0", %d, "%s", True)\n'
++            'ret = session_path'
++            % (os.getuid(), os.environ.get('USER', 'user'))
++        )
++
+     def stop_logind(self):
+         '''stop mock logind'''
+ 
