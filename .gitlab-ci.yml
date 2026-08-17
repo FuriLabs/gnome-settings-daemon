@@ -84,7 +84,6 @@ stages:
 
 .Run Tests: &run_tests
   echo "== Testing ==" &&
-  mkdir -m 1777 /tmp/.X11-unix &&
   meson test -C _build --verbose --no-stdsplit
 
 ##
@@ -103,6 +102,7 @@ build-fedora-container@x86_64:
     FDO_DISTRIBUTION_EXEC: |
       set -e
       dnf install -y --disablerepo='fedora-cisco-openh264' $FEDORA_DEPENDENCIES
+      mkdir -p -m 1777 /tmp/.X11-unix
       ./.gitlab-ci/install-meson-project.sh \
         https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas.git \
         main
@@ -190,7 +190,6 @@ dist:
   needs:
     - build-fedora-container@x86_64
   script:
-    - mkdir -m 1777 /tmp/.X11-unix
     - meson setup build
     - meson compile -C build
     - meson dist -C build
