@@ -80,7 +80,7 @@ stages:
   echo "== Building ==" &&
   rm -rf _build/ &&
   meson setup --werror . _build ${BUILD_OPTS} &&
-  ninja -C _build 2>&1 | tee compilation.log
+  meson compile -C _build 2>&1 | tee compilation.log
 
 .Run Tests: &run_tests
   echo "== Testing ==" &&
@@ -136,7 +136,7 @@ build: &build
     - *build_procedure
 
     - echo "== Installing =="
-    - ninja -C _build install
+    - meson install -C _build
 
     - echo "== Report =="
     - build-aux/ci/ci-helper.sh "WARNINGS"
