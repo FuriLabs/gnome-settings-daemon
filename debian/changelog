@@ -1,3 +1,9 @@
+gnome-settings-daemon (51~beta-3) UNRELEASED; urgency=medium
+
+  * Use DH_COMPAT=13 for dh_installsystemduser to avoid warnings
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 30 Aug 2026 19:32:28 +0200
+
 gnome-settings-daemon (51~beta-2) unstable; urgency=medium
 
   * d/p: Fix tests when running with gnome-session 51~beta
