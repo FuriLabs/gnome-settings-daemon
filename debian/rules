@@ -43,3 +43,7 @@ override_dh_auto_test:
 
 override_dh_installchangelogs:
 	dh_installchangelogs -XChangeLog
+
+# Avoid warnings https://salsa.debian.org/debian/debhelper/-/merge_requests/169
+override_dh_installsystemduser:
+	DH_COMPAT=13 dh_installsystemduser
