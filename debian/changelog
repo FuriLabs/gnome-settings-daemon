@@ -1,9 +1,11 @@
-gnome-settings-daemon (51~rc-1) UNRELEASED; urgency=medium
+gnome-settings-daemon (51~rc-1) unstable; urgency=medium
 
-  * Use DH_COMPAT=13 for dh_installsystemduser to avoid warnings
   * New upstream release
+  * Opt into Salsa CI
+  * Remove 3 test patches applied in new release
+  * Use DH_COMPAT=13 for dh_installsystemduser to avoid warnings
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 01 Sep 2026 05:56:47 +0200
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 01 Sep 2026 06:30:22 +0200
 
 gnome-settings-daemon (51~beta-2) unstable; urgency=medium
 
