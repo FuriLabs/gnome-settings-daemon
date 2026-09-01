@@ -1,8 +1,9 @@
-gnome-settings-daemon (51~beta-3) UNRELEASED; urgency=medium
+gnome-settings-daemon (51~rc-1) UNRELEASED; urgency=medium
 
   * Use DH_COMPAT=13 for dh_installsystemduser to avoid warnings
+  * New upstream release
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 30 Aug 2026 19:32:28 +0200
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 01 Sep 2026 05:56:47 +0200
 
 gnome-settings-daemon (51~beta-2) unstable; urgency=medium
 
