@@ -8,6 +8,7 @@ import subprocess
 import time
 import os
 import os.path
+import pwd
 import tempfile
 import fcntl
 import shutil
@@ -19,26 +20,38 @@ from output_checker import OutputChecker
 
 from gi.repository import GLib
 
+def maybe_skip_test():
+    sys.exit(77 if not os.getenv('GSD_TEST_NEVER_SKIP') else 1)
+
 try:
     import dbusmock
 except ImportError:
     sys.stderr.write('You need python-dbusmock (http://pypi.python.org/pypi/python-dbusmock) for this test suite.\n')
-    sys.exit(77)
+    maybe_skip_test()
 
+import dbus
 from dbusmock import DBusTestCase
 
 try:
     from gi.repository import Gio
 except ImportError:
     sys.stderr.write('You need pygobject and the Gio GIR for this test suite.\n')
-    sys.exit(77)
+    maybe_skip_test()
 
-_GNOME_SESSION_SERVICE_PATH = '/usr/libexec/gnome-session-service'
-_GNOME_SESSION_CTL_PATH = '/usr/libexec/gnome-session-ctl'
+def _gnome_session_libexec(binary):
+    prefix = os.environ.get('GSD_TEST_PREFIX', '/usr')
+    path = os.path.join(prefix, 'libexec', binary)
+    if os.path.exists(path):
+        return path
+    return os.path.join('/usr', 'libexec', binary)
+
+
+_GNOME_SESSION_SERVICE_PATH = _gnome_session_libexec('gnome-session-service')
+_GNOME_SESSION_CTL_PATH = _gnome_session_libexec('gnome-session-ctl')
 
 if not os.path.isfile(_GNOME_SESSION_SERVICE_PATH) or not os.path.isfile(_GNOME_SESSION_CTL_PATH):
     sys.stderr.write('You need gnome-session-service and gnome-session-ctl for this test suite.\n')
-    sys.exit(77)
+    maybe_skip_test()
 
 
 top_builddir = os.environ.get('TOP_BUILDDIR',
@@ -65,6 +78,9 @@ class GSDTestCase(DBusTestCase):
         os.environ['GIO_USE_VFS'] = 'local'
         os.environ['GVFS_DISABLE_FUSE'] = '1'
         # we do some string checks, disable translations
+        os.environ.pop('LC_ALL', None)
+        os.environ.pop('LANGUAGE', None)
+        os.environ['LANG'] = 'C.UTF-8'
         os.environ['LC_MESSAGES'] = 'C'
         klass.workdir = tempfile.mkdtemp(prefix='gsd-plugin-test')
         klass.addClassCleanup(shutil.rmtree, klass.workdir)
@@ -283,6 +299,36 @@ class GSDTestCase(DBusTestCase):
             dbusmock.MOCK_IFACE, 'SetOnExternalPower', 'b', '',
             'self.props["org.freedesktop.login1.Manager"]["OnExternalPower"] = args[0]'
         )
+
+        # gnome-session (gsm-systemd) finds the graphical session over D-Bus by
+        # reading the "Display" property of the "user/self" logind object,
+        # which points at the user's primary graphical session. It then reads
+        # that session's "Active" property to decide whether the session is
+        # active (SessionIsActive), which several tests rely on.
+        #
+        # Provide an active session and a "user/self" object whose "Display"
+        # points at it, so that gnome-session considers the session active.
+        session_id = 'gsdtest'
+        session_path = self.logind_obj.AddSession(
+            session_id, 'seat0',
+            os.getuid(), pwd.getpwuid(os.getuid()).pw_name,
+            True,
+            dbus_interface=dbusmock.MOCK_IFACE)
+
+        self.logind_obj.AddObject(
+            '/org/freedesktop/login1/user/self',
+            'org.freedesktop.login1.User',
+            {
+                'Display': dbus.Struct(
+                    (session_id, dbus.ObjectPath(session_path)),
+                    signature='so'),
+                'Sessions': dbus.Array(
+                    [(session_id, dbus.ObjectPath(session_path))],
+                    signature='(so)'),
+                'State': 'active',
+            },
+            [],
+            dbus_interface=dbusmock.MOCK_IFACE)
 
     def stop_logind(self):
         '''stop mock logind'''

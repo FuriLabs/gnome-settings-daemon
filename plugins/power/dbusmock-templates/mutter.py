@@ -73,7 +73,10 @@ def load(mock, parameters):
     mock.serial = 1
     mock.backlights = {}
 
-    mock.AddProperty(MAIN_IFACE, 'Backlight', backlights_to_dbus({}))
+    mock.AddProperty(MAIN_IFACE, 'Backlight', dbus.Struct(
+        (dbus.UInt32(mock.serial), backlights_to_dbus({})),
+        signature='uaa{sv}',
+    ))
     mock.AddProperty(MAIN_IFACE, 'PowerSaveMode', dbus.Int32(0))
     mock.AddProperty(MAIN_IFACE, 'HasExternalMonitor', True)
 

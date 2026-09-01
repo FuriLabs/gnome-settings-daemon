@@ -7,12 +7,12 @@ include:
     inputs:
       job-stage: "deploy"
       dist-job-name: "dist"
-      tarball-artifact-path: "build/meson-dist/$CI_PROJECT_NAME-$CI_COMMIT_TAG.tar.xz"
+      tarball-artifact-path: "_build/meson-dist/$CI_PROJECT_NAME-$CI_COMMIT_TAG.tar.xz"
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   FDO_DISTRIBUTION_VERSION: rawhide
-  FDO_DISTRIBUTION_TAG: "x86_64-2026-01-07.1"
+  FDO_DISTRIBUTION_TAG: "x86_64-2026-08-21.0"
   FDO_UPSTREAM_REPO: GNOME/gnome-settings-daemon
   # Expiry sets fdo.expires on the image
   FEDORA_IMAGE: "$CI_REGISTRY/$FDO_UPSTREAM_REPO/fedora/$FDO_DISTRIBUTION_VERSION:$FDO_DISTRIBUTION_TAG"
@@ -28,7 +28,6 @@ variables:
     git
     glib2-devel
     gnome-desktop4-devel
-    gnome-session
     gobject-introspection
     gobject-introspection-devel
     lcov gcovr clang libasan libubsan libtsan
@@ -44,6 +43,7 @@ variables:
     polkit-devel
     pulseaudio-libs-devel
     python3-gobject python3-dbusmock
+    systemd-devel
     upower-devel
     util-linux
     which
@@ -76,15 +76,17 @@ stages:
   build-aux/ci/ci-helper.sh "INFO" &&
   build-aux/ci/ci-helper.sh "GIT_INFO"
 
+.Setup procedure: &setup_procedure
+  echo "== Setup ==" &&
+  rm -rf _build/ &&
+  meson setup --werror . _build ${BUILD_OPTS}
+
 .Build procedure: &build_procedure
   echo "== Building ==" &&
-  rm -rf _build/ &&
-  meson setup --werror . _build ${BUILD_OPTS} &&
-  ninja -C _build 2>&1 | tee compilation.log
+  meson compile -C _build 2>&1 | tee compilation.log
 
 .Run Tests: &run_tests
   echo "== Testing ==" &&
-  mkdir -m 1777 /tmp/.X11-unix &&
   meson test -C _build --verbose --no-stdsplit
 
 ##
@@ -96,10 +98,21 @@ build-fedora-container@x86_64:
   stage: prepare
   variables:
     GIT_STRATEGY: none # no need to pull the whole tree for rebuilding the image
-    FDO_DISTRIBUTION_PACKAGES: $FEDORA_DEPENDENCIES
+    # Install the packages ourselves in FDO_DISTRIBUTION_EXEC instead of via
+    # FDO_DISTRIBUTION_PACKAGES: the latter runs before we get a chance to
+    # disable the fedora-cisco-openh264 repository, whose OpenPGP key check
+    # currently fails and aborts the whole package installation.
     FDO_DISTRIBUTION_EXEC: |
+      set -e
+      dnf install -y --disablerepo='fedora-cisco-openh264' $FEDORA_DEPENDENCIES
+      mkdir -p -m 1777 /tmp/.X11-unix
       ./.gitlab-ci/install-meson-project.sh \
         https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas.git \
+        main
+      ./.gitlab-ci/install-meson-project.sh \
+        -Ddocbook=false \
+        -Dman=false \
+        https://gitlab.gnome.org/GNOME/gnome-session.git \
         main
 
 ##
@@ -123,10 +136,11 @@ build: &build
 
   script:
     - *environment_information
+    - *setup_procedure
     - *build_procedure
 
     - echo "== Installing =="
-    - ninja -C _build install
+    - meson install -C _build
 
     - echo "== Report =="
     - build-aux/ci/ci-helper.sh "WARNINGS"
@@ -154,6 +168,8 @@ test: &test
 
   extends:
     - .fdo.distribution-image@fedora
+  variables:
+    GSD_TEST_NEVER_SKIP: true
   image:
     name: ${FDO_DISTRIBUTION_IMAGE}
   needs:
@@ -177,17 +193,18 @@ dist:
   stage: test
   extends:
     - .fdo.distribution-image@fedora
+  variables:
+    GSD_TEST_NEVER_SKIP: true
   needs:
     - build-fedora-container@x86_64
   script:
-    - mkdir -m 1777 /tmp/.X11-unix
-    - meson setup build
-    - meson compile -C build
-    - meson dist -C build
+    - *environment_information
+    - *setup_procedure
+    - meson dist -C _build
   artifacts:
     expose_as: 'Tarball'
     paths:
-      - build/meson-dist/
+      - _build/meson-dist/
 
 # Runs the coverage test.
 coverage:
@@ -211,7 +228,7 @@ coverage:
 
   script:
     - *environment_information
-    - *build_procedure
+    - *setup_procedure
     - *run_tests
 
     - ninja -C _build coverage-html
@@ -255,7 +272,7 @@ pages:
   when: manual
   script:
     - *environment_information
-    - *build_procedure
+    - *setup_procedure
     - *run_tests
   extends:
     - .fdo.distribution-image@fedora

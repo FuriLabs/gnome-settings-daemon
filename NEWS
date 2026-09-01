@@ -1,3 +1,12 @@
+=============
+Version 51.rc
+=============
+- Translation updates
+- CI improvements
+
+Power:
+- Avoid overlap between panel dimming and idle sleep notification
+
 ===============
 Version 51.beta
 ===============

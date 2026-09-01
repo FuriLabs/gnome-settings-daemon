@@ -68,9 +68,9 @@ gsd_enums_dep = declare_dependency(
 meson.override_dependency(meson.project_name(), gsd_enums_dep)
 
 # for unit tests - gnome.compile_schemas() only looks in srcdir
-custom_target('compile-schemas',
+compiled_schemas = custom_target('compile-schemas',
   input: schemas_xml,
   depends: mkenums,
   output: 'gschemas.compiled',
   command: [find_program('glib-compile-schemas'), meson.current_build_dir()],
-  build_by_default: true)
+)

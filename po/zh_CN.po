@@ -22,15 +22,15 @@
 # Mingcong Bai <jeffbai@aosc.xyz>, 2016, 2017.
 # Dingzhong Chen <wsxy162@gmail.com>, 2018-2019.
 # 王滋涵 Zephyr Wang <wi24rd@fedoraproject.org>, 2020.
-# lumingzh <lumingzh@qq.com>, 2022-2025.
+# lumingzh <lumingzh@qq.com>, 2022-2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-settings-daemon master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-settings-daemon/"
 "issues/\n"
-"POT-Creation-Date: 2026-03-04 09:29+0000\n"
-"PO-Revision-Date: 2026-06-23 12:41+0800\n"
+"POT-Creation-Date: 2026-07-06 11:41+0000\n"
+"PO-Revision-Date: 2026-08-15 17:05+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -38,7 +38,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Gtranslator 50.0\n"
 
 #: data/org.gnome.settings-daemon.global-shortcuts.gschema.xml.in:6
 msgid "Applications"
@@ -1314,7 +1314,7 @@ msgid ""
 "suspend, ignoring all the other action options."
 msgstr ""
 "按下系统电源按钮时进行的动作。虚拟机仅执行“nothing”动作，否则将关机。平板则总"
-"是挂起，忽略其它所有动作选项。"
+"是挂起，忽略其他所有动作选项。"
 
 #: data/org.gnome.settings-daemon.plugins.power.gschema.xml.in:46
 msgid "Enable power-saver profile when battery is low"
@@ -1484,51 +1484,51 @@ msgstr "设置"
 msgid "Date & Time Settings"
 msgstr "日期和时间设置"
 
-#: plugins/housekeeping/gsd-disk-space.c:653
+#: plugins/housekeeping/gsd-disk-space.c:654
 msgid "Disk Space"
 msgstr "磁盘空间"
 
-#: plugins/housekeeping/gsd-disk-space.c:673
+#: plugins/housekeeping/gsd-disk-space.c:674
 msgid "Examine"
 msgstr "查看"
 
-#: plugins/housekeeping/gsd-disk-space.c:682
+#: plugins/housekeeping/gsd-disk-space.c:683
 msgid "Empty Trash"
 msgstr "清空回收站"
 
-#: plugins/housekeeping/gsd-disk-space.c:690
+#: plugins/housekeeping/gsd-disk-space.c:691
 msgid "Ignore"
 msgstr "忽略"
 
-#: plugins/housekeeping/gsd-disk-space.c:721
+#: plugins/housekeeping/gsd-disk-space.c:722
 #, c-format
 msgid "Low Disk Space on “%s”"
 msgstr "“%s”上的磁盘空间不足"
 
-#: plugins/housekeeping/gsd-disk-space.c:723
+#: plugins/housekeeping/gsd-disk-space.c:724
 #, c-format
 msgid ""
 "The volume “%s” has only %s disk space remaining.  You may free up some "
 "space by emptying the trash."
 msgstr "巻 %s 仅剩余 %s 的磁盘空间，请清空回收站释放一部分空间。"
 
-#: plugins/housekeeping/gsd-disk-space.c:727
+#: plugins/housekeeping/gsd-disk-space.c:728
 #, c-format
 msgid "The volume “%s” has only %s disk space remaining."
 msgstr "卷 %s 仅剩余 %s 的硬盘空间。"
 
-#: plugins/housekeeping/gsd-disk-space.c:732
+#: plugins/housekeeping/gsd-disk-space.c:733
 msgid "Low Disk Space"
 msgstr "磁盘空间不足"
 
-#: plugins/housekeeping/gsd-disk-space.c:734
+#: plugins/housekeeping/gsd-disk-space.c:735
 #, c-format
 msgid ""
 "This computer has only %s disk space remaining.  You may free up some space "
 "by emptying the trash."
 msgstr "此计算机仅剩余 %s 的磁盘空间，请清空回收站释放一部分空间。"
 
-#: plugins/housekeeping/gsd-disk-space.c:737
+#: plugins/housekeeping/gsd-disk-space.c:738
 #, c-format
 msgid "This computer has only %s disk space remaining."
 msgstr "此计算机仅剩余 %s 的硬盘空间。"
@@ -1647,704 +1647,704 @@ msgid_plural "minutes"
 msgstr[0] "分钟"
 
 #. TRANSLATORS: this is the sound description
-#: plugins/power/gpm-common.c:324 plugins/power/gsd-power-manager.c:940
-#: plugins/power/gsd-power-manager.c:1028
+#: plugins/power/gpm-common.c:324 plugins/power/gsd-power-manager.c:941
+#: plugins/power/gsd-power-manager.c:1029
 msgid "Battery is critically low"
 msgstr "电池电量严重不足"
 
 #. TRANSLATORS: this is the notification application name
-#: plugins/power/gsd-power-manager.c:371
+#: plugins/power/gsd-power-manager.c:372
 msgid "Power"
 msgstr "电源"
 
 #. TRANSLATORS: UPS is now discharging
-#: plugins/power/gsd-power-manager.c:411
+#: plugins/power/gsd-power-manager.c:412
 msgid "UPS Discharging"
 msgstr "UPS 正在放电"
 
 #. TRANSLATORS: tell the user how much time they have got
-#: plugins/power/gsd-power-manager.c:416
+#: plugins/power/gsd-power-manager.c:417
 #, c-format
 msgid "%s of UPS backup power remaining"
 msgstr "剩余 %s 的 UPS 备用电量"
 
-#: plugins/power/gsd-power-manager.c:419
+#: plugins/power/gsd-power-manager.c:420
 msgid "Unknown amount of UPS backup power remaining"
 msgstr "UPS 剩余备用电量未知"
 
 #. TRANSLATORS: notification title, a wireless mouse is low or very low on power
-#: plugins/power/gsd-power-manager.c:523
+#: plugins/power/gsd-power-manager.c:524
 msgid "Mouse battery low"
 msgstr "鼠标电池电量低"
 
 #. TRANSLATORS: notification body, a wireless mouse is low on power
-#: plugins/power/gsd-power-manager.c:526
+#: plugins/power/gsd-power-manager.c:527
 #, c-format
 msgid "Wireless mouse is low on power (%.0f%%)"
 msgstr "无线鼠标电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:527
+#: plugins/power/gsd-power-manager.c:528
 msgid "Wireless mouse is low on power"
 msgstr "无线鼠标电量低"
 
 #. TRANSLATORS: notification body, a wireless mouse is very low on power
-#: plugins/power/gsd-power-manager.c:529
+#: plugins/power/gsd-power-manager.c:530
 #, c-format
 msgid ""
 "Wireless mouse is very low on power (%.0f%%). This device will soon stop "
 "functioning if not charged."
 msgstr "无线鼠标电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:531
+#: plugins/power/gsd-power-manager.c:532
 msgid ""
 "Wireless mouse is very low on power. This device will soon stop functioning "
 "if not charged."
 msgstr "无线鼠标电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a wireless keyboard is low or very low on power
-#: plugins/power/gsd-power-manager.c:536
+#: plugins/power/gsd-power-manager.c:537
 msgid "Keyboard battery low"
 msgstr "键盘电池电量低"
 
 #. TRANSLATORS: notification body, a wireless keyboard is low on power
-#: plugins/power/gsd-power-manager.c:539
+#: plugins/power/gsd-power-manager.c:540
 #, c-format
 msgid "Wireless keyboard is low on power (%.0f%%)"
 msgstr "无线键盘电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:540
+#: plugins/power/gsd-power-manager.c:541
 msgid "Wireless keyboard is low on power"
 msgstr "无线键盘电量低"
 
 #. TRANSLATORS: notification body, a wireless keyboard is very low on power
-#: plugins/power/gsd-power-manager.c:542
+#: plugins/power/gsd-power-manager.c:543
 #, c-format
 msgid ""
 "Wireless keyboard is very low on power (%.0f%%). This device will soon stop "
 "functioning if not charged."
 msgstr "无线键盘电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:544
+#: plugins/power/gsd-power-manager.c:545
 msgid ""
 "Wireless keyboard is very low on power. This device will soon stop "
 "functioning if not charged."
 msgstr "无线键盘电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a PDA (Personal Digital Assistance device) is low or very on power
-#: plugins/power/gsd-power-manager.c:549
+#: plugins/power/gsd-power-manager.c:550
 msgid "PDA battery low"
 msgstr "PDA 电池电量低"
 
 #. TRANSLATORS: notification body, a PDA (Personal Digital Assistance device) is low on power
-#: plugins/power/gsd-power-manager.c:552
+#: plugins/power/gsd-power-manager.c:553
 #, c-format
 msgid "PDA is low on power (%.0f%%)"
 msgstr "PDA 电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:553
+#: plugins/power/gsd-power-manager.c:554
 msgid "PDA is low on power"
 msgstr "PDA 电量低"
 
 #. TRANSLATORS: notification body, a PDA (Personal Digital Assistance device) is very low on power
-#: plugins/power/gsd-power-manager.c:555
+#: plugins/power/gsd-power-manager.c:556
 #, c-format
 msgid ""
 "PDA is very low on power (%.0f%%). This device will soon stop functioning if "
 "not charged."
 msgstr "PDA 电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:557
+#: plugins/power/gsd-power-manager.c:558
 msgid ""
 "PDA is very low on power. This device will soon stop functioning if not "
 "charged."
 msgstr "PDA 电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a cell phone (mobile phone) is low or very low on power
-#: plugins/power/gsd-power-manager.c:562
+#: plugins/power/gsd-power-manager.c:563
 msgid "Cell phone battery low"
 msgstr "手机电池电量低"
 
 #. TRANSLATORS: notification body, a cell phone (mobile phone) is low on power
-#: plugins/power/gsd-power-manager.c:565
+#: plugins/power/gsd-power-manager.c:566
 #, c-format
 msgid "Cell phone is low on power (%.0f%%)"
 msgstr "手机电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:566
+#: plugins/power/gsd-power-manager.c:567
 msgid "Cell phone is low on power"
 msgstr "手机电量低"
 
 #. TRANSLATORS: notification body, a cell phone (mobile phone) is very low on power
-#: plugins/power/gsd-power-manager.c:568
+#: plugins/power/gsd-power-manager.c:569
 #, c-format
 msgid ""
 "Cell phone is very low on power (%.0f%%). This device will soon stop "
 "functioning if not charged."
 msgstr "手机电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:570
+#: plugins/power/gsd-power-manager.c:571
 msgid ""
 "Cell phone is very low on power. This device will soon stop functioning if "
 "not charged."
 msgstr "手机电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a media player (e.g. mp3 player) is low or very low on power
-#: plugins/power/gsd-power-manager.c:575
+#: plugins/power/gsd-power-manager.c:576
 msgid "Media player battery low"
 msgstr "媒体播放器电池电量低"
 
 #. TRANSLATORS: notification body, a media player (e.g. mp3 player) is low on power
-#: plugins/power/gsd-power-manager.c:578
+#: plugins/power/gsd-power-manager.c:579
 #, c-format
 msgid "Media player is low on power (%.0f%%)"
 msgstr "媒体播放器电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:579
+#: plugins/power/gsd-power-manager.c:580
 msgid "Media player is low on power"
 msgstr "媒体播放器电量低"
 
 #. TRANSLATORS: notification body, a media player (e.g. mp3 player) is very low on power
-#: plugins/power/gsd-power-manager.c:581
+#: plugins/power/gsd-power-manager.c:582
 #, c-format
 msgid ""
 "Media player is very low on power (%.0f%%). This device will soon stop "
 "functioning if not charged."
 msgstr "媒体播放器电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:583
+#: plugins/power/gsd-power-manager.c:584
 msgid ""
 "Media player is very low on power. This device will soon stop functioning if "
 "not charged."
 msgstr "媒体播放器电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a graphics tablet (e.g. wacom) is low or very low on power
-#: plugins/power/gsd-power-manager.c:588
+#: plugins/power/gsd-power-manager.c:589
 msgid "Tablet battery low"
 msgstr "数位板电池电量低"
 
 #. TRANSLATORS: notification body, a graphics tablet (e.g. wacom) is low on power
-#: plugins/power/gsd-power-manager.c:591
+#: plugins/power/gsd-power-manager.c:592
 #, c-format
 msgid "Tablet is low on power (%.0f%%)"
 msgstr "数位板电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:592
+#: plugins/power/gsd-power-manager.c:593
 msgid "Tablet is low on power"
 msgstr "数位板电量低"
 
 #. TRANSLATORS: notification body, a graphics tablet (e.g. wacom) is very low on power
-#: plugins/power/gsd-power-manager.c:594
+#: plugins/power/gsd-power-manager.c:595
 #, c-format
 msgid ""
 "Tablet is very low on power (%.0f%%). This device will soon stop functioning "
 "if not charged."
 msgstr "数位板电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:596
+#: plugins/power/gsd-power-manager.c:597
 msgid ""
 "Tablet is very low on power. This device will soon stop functioning if not "
 "charged."
 msgstr "数位板电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, an attached computer (e.g. ipad) is low or very low on power
-#: plugins/power/gsd-power-manager.c:601
+#: plugins/power/gsd-power-manager.c:602
 msgid "Attached computer battery low"
 msgstr "连接的计算机电池电量低"
 
 #. TRANSLATORS: notification body, an attached computer (e.g. ipad) is low on power
-#: plugins/power/gsd-power-manager.c:604
+#: plugins/power/gsd-power-manager.c:605
 #, c-format
 msgid "Attached computer is low on power (%.0f%%)"
 msgstr "连接的计算机电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:605
+#: plugins/power/gsd-power-manager.c:606
 msgid "Attached computer is low on power"
 msgstr "连接的计算机电量低"
 
 #. TRANSLATORS: notification body, an attached computer (e.g. ipad) is very low on power
-#: plugins/power/gsd-power-manager.c:607
+#: plugins/power/gsd-power-manager.c:608
 #, c-format
 msgid ""
 "Attached computer is very low on power (%.0f%%). The device will soon "
 "shutdown if not charged."
 msgstr "连接的计算机电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:609
+#: plugins/power/gsd-power-manager.c:610
 msgid ""
 "Attached computer is very low on power. The device will soon shutdown if not "
 "charged."
 msgstr "连接的计算机电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a game controller (e.g. joystick or joypad) is low or very low on power
-#: plugins/power/gsd-power-manager.c:614
+#: plugins/power/gsd-power-manager.c:615
 msgid "Game controller battery low"
 msgstr "游戏控制器电池电量低"
 
 #. TRANSLATORS: notification body, a game controller (e.g. joystick or joypad) is low on power
-#: plugins/power/gsd-power-manager.c:617
+#: plugins/power/gsd-power-manager.c:618
 #, c-format
 msgid "Game controller is low on power (%.0f%%)"
 msgstr "游戏控制器电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:618
+#: plugins/power/gsd-power-manager.c:619
 msgid "Game controller is low on power"
 msgstr "游戏控制器电量低"
 
 #. TRANSLATORS: notification body, an attached game controller (e.g. joystick or joypad) is very low on power
-#: plugins/power/gsd-power-manager.c:620
+#: plugins/power/gsd-power-manager.c:621
 #, c-format
 msgid ""
 "Game controller is very low on power (%.0f%%). The device will soon shutdown "
 "if not charged."
 msgstr "游戏控制器电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:622
+#: plugins/power/gsd-power-manager.c:623
 msgid ""
 "Game controller is very low on power. The device will soon shutdown if not "
 "charged."
 msgstr "游戏控制器电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a pen is low or very low on power
-#: plugins/power/gsd-power-manager.c:627
+#: plugins/power/gsd-power-manager.c:628
 msgid "Pen battery low"
 msgstr "书写笔电池电量低"
 
 #. TRANSLATORS: notification body, a pen is low on power
-#: plugins/power/gsd-power-manager.c:630
+#: plugins/power/gsd-power-manager.c:631
 #, c-format
 msgid "Pen is low on power (%.0f%%)"
 msgstr "书写笔电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:631
+#: plugins/power/gsd-power-manager.c:632
 msgid "Pen is low on power"
 msgstr "书写笔电量低"
 
 #. TRANSLATORS: notification body, a pen is very low on power
-#: plugins/power/gsd-power-manager.c:633
+#: plugins/power/gsd-power-manager.c:634
 #, c-format
 msgid ""
 "Pen is very low on power (%.0f%%). The device will soon shutdown if not "
 "charged."
 msgstr "书写笔电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:635
+#: plugins/power/gsd-power-manager.c:636
 msgid "Pen is very low on power. The device will soon shutdown if not charged."
 msgstr "书写笔电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, an external touchpad is low or very low on power
-#: plugins/power/gsd-power-manager.c:640
+#: plugins/power/gsd-power-manager.c:641
 msgid "Touchpad battery low"
 msgstr "触摸板电池电量低"
 
 #. TRANSLATORS: notification body, an external touchpad is low on power
-#: plugins/power/gsd-power-manager.c:643
+#: plugins/power/gsd-power-manager.c:644
 #, c-format
 msgid "Touchpad is low on power (%.0f%%)"
 msgstr "触摸板电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:644
+#: plugins/power/gsd-power-manager.c:645
 msgid "Touchpad is low on power"
 msgstr "触摸板电量低"
 
 #. TRANSLATORS: notification body, an external touchpad is very low on power
-#: plugins/power/gsd-power-manager.c:646
+#: plugins/power/gsd-power-manager.c:647
 #, c-format
 msgid ""
 "Touchpad is very low on power (%.0f%%). The device will soon shutdown if not "
 "charged."
 msgstr "触摸板电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:648
+#: plugins/power/gsd-power-manager.c:649
 msgid ""
 "Touchpad is very low on power. The device will soon shutdown if not charged."
 msgstr "触摸板机电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a headset (headphones + microphone) is low or very low on power
-#: plugins/power/gsd-power-manager.c:653
+#: plugins/power/gsd-power-manager.c:654
 msgid "Headset battery low"
 msgstr "耳麦电池电量低"
 
 #. TRANSLATORS: notification body, a headset (headphones + microphone) is low on power
-#: plugins/power/gsd-power-manager.c:656
+#: plugins/power/gsd-power-manager.c:657
 #, c-format
 msgid "Headset is low on power (%.0f%%)"
 msgstr "耳麦电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:657
+#: plugins/power/gsd-power-manager.c:658
 msgid "Headset is low on power"
 msgstr "耳麦电量低"
 
 #. TRANSLATORS: notification body, a headset (headphones + microphone) is very low on power
-#: plugins/power/gsd-power-manager.c:659
+#: plugins/power/gsd-power-manager.c:660
 #, c-format
 msgid ""
 "Headset is very low on power (%.0f%%). The device will soon shutdown if not "
 "charged."
 msgstr "耳麦电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:661
+#: plugins/power/gsd-power-manager.c:662
 msgid ""
 "Headset is very low on power. The device will soon shutdown if not charged."
 msgstr "耳麦电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, speaker is low or very low on power
-#: plugins/power/gsd-power-manager.c:666
+#: plugins/power/gsd-power-manager.c:667
 msgid "Speaker battery low"
 msgstr "扬声器电池电量低"
 
 #. TRANSLATORS: notification body, a speaker is low on power
-#: plugins/power/gsd-power-manager.c:669
+#: plugins/power/gsd-power-manager.c:670
 #, c-format
 msgid "Speaker is low on power (%.0f%%)"
 msgstr "扬声器电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:670
+#: plugins/power/gsd-power-manager.c:671
 msgid "Speaker is low on power"
 msgstr "扬声器电量低"
 
 #. TRANSLATORS: notification body, a speaker is very low on power
-#: plugins/power/gsd-power-manager.c:672
+#: plugins/power/gsd-power-manager.c:673
 #, c-format
 msgid ""
 "Speaker is very low on power (%.0f%%). The device will soon shutdown if not "
 "charged."
 msgstr "扬声器电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:674
+#: plugins/power/gsd-power-manager.c:675
 msgid ""
 "Speaker is very low on power. The device will soon shutdown if not charged."
 msgstr "扬声器电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, headphones (no microphone) are low or very low on power
-#: plugins/power/gsd-power-manager.c:679
+#: plugins/power/gsd-power-manager.c:680
 msgid "Headphones battery low"
 msgstr "耳机电池电量低"
 
 #. TRANSLATORS: notification body, headphones (no microphone) are low on power
-#: plugins/power/gsd-power-manager.c:682
+#: plugins/power/gsd-power-manager.c:683
 #, c-format
 msgid "Headphones are low on power (%.0f%%)"
 msgstr "耳机电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:683
+#: plugins/power/gsd-power-manager.c:684
 msgid "Headphones are low on power"
 msgstr "耳机电量低"
 
 #. TRANSLATORS: notification body, headphones (no microphone) are very low on power
-#: plugins/power/gsd-power-manager.c:685
+#: plugins/power/gsd-power-manager.c:686
 #, c-format
 msgid ""
 "Headphones are very low on power (%.0f%%). The device will soon shutdown if "
 "not charged."
 msgstr "耳机电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:687
+#: plugins/power/gsd-power-manager.c:688
 msgid ""
 "Headphones are very low on power. The device will soon shutdown if not "
 "charged."
 msgstr "耳机电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, an audio device is low or very low on power
-#: plugins/power/gsd-power-manager.c:692
+#: plugins/power/gsd-power-manager.c:693
 msgid "Audio device battery low"
 msgstr "音频设备电池电量低"
 
 #. TRANSLATORS: notification body, an audio device is low on power
-#: plugins/power/gsd-power-manager.c:695
+#: plugins/power/gsd-power-manager.c:696
 #, c-format
 msgid "Audio device is low on power (%.0f%%)"
 msgstr "音频设备电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:696
+#: plugins/power/gsd-power-manager.c:697
 msgid "Audio device is low on power"
 msgstr "音频设备电量低"
 
 #. TRANSLATORS: notification body, an audio device is very low on power
-#: plugins/power/gsd-power-manager.c:698
+#: plugins/power/gsd-power-manager.c:699
 #, c-format
 msgid ""
 "Audio device is very low on power (%.0f%%). The device will soon shutdown if "
 "not charged."
 msgstr "音频设备电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:700
+#: plugins/power/gsd-power-manager.c:701
 msgid ""
 "Audio device is very low on power. The device will soon shutdown if not "
 "charged."
 msgstr "音频设备电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a remote control is low or very low on power
-#: plugins/power/gsd-power-manager.c:705
+#: plugins/power/gsd-power-manager.c:706
 msgid "Remote battery low"
 msgstr "远程控制器电池电量低"
 
 #. TRANSLATORS: notification body, an remote control is low on power
-#: plugins/power/gsd-power-manager.c:708
+#: plugins/power/gsd-power-manager.c:709
 #, c-format
 msgid "Remote is low on power (%.0f%%)"
 msgstr "远程控制器电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:709
+#: plugins/power/gsd-power-manager.c:710
 msgid "Remote is low on power"
 msgstr "远程控制器电量低"
 
 #. TRANSLATORS: notification body, a remote control is very low on power
-#: plugins/power/gsd-power-manager.c:711
+#: plugins/power/gsd-power-manager.c:712
 #, c-format
 msgid ""
 "Remote is very low on power (%.0f%%). The device will soon shutdown if not "
 "charged."
 msgstr "远程控制器电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:713
+#: plugins/power/gsd-power-manager.c:714
 msgid ""
 "Remote is very low on power. The device will soon shutdown if not charged."
 msgstr "远程控制器电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a printer is low or very low on power
-#: plugins/power/gsd-power-manager.c:718
+#: plugins/power/gsd-power-manager.c:719
 msgid "Printer battery low"
 msgstr "打印机电池电量低"
 
 #. TRANSLATORS: notification body, a printer is low on power
-#: plugins/power/gsd-power-manager.c:721
+#: plugins/power/gsd-power-manager.c:722
 #, c-format
 msgid "Printer is low on power (%.0f%%)"
 msgstr "打印机电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:722
+#: plugins/power/gsd-power-manager.c:723
 msgid "Printer is low on power"
 msgstr "打印机电量低"
 
 #. TRANSLATORS: notification body, a printer is very low on power
-#: plugins/power/gsd-power-manager.c:724
+#: plugins/power/gsd-power-manager.c:725
 #, c-format
 msgid ""
 "Printer is very low on power (%.0f%%). The device will soon shutdown if not "
 "charged."
 msgstr "打印机电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:726
+#: plugins/power/gsd-power-manager.c:727
 msgid ""
 "Printer is very low on power. The device will soon shutdown if not charged."
 msgstr "打印机电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a scanner is low or very low on power
-#: plugins/power/gsd-power-manager.c:731
+#: plugins/power/gsd-power-manager.c:732
 msgid "Scanner battery low"
 msgstr "扫描仪电池电量低"
 
 #. TRANSLATORS: notification body, a scanner is low on power
-#: plugins/power/gsd-power-manager.c:734
+#: plugins/power/gsd-power-manager.c:735
 #, c-format
 msgid "Scanner is low on power (%.0f%%)"
 msgstr "扫描仪电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:735
+#: plugins/power/gsd-power-manager.c:736
 msgid "Scanner is low on power"
 msgstr "扫描仪电量低"
 
 #. TRANSLATORS: notification body, a scanner is very low on power
-#: plugins/power/gsd-power-manager.c:737
+#: plugins/power/gsd-power-manager.c:738
 #, c-format
 msgid ""
 "Scanner is very low on power (%.0f%%). The device will soon shutdown if not "
 "charged."
 msgstr "扫描仪电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:739
+#: plugins/power/gsd-power-manager.c:740
 msgid ""
 "Scanner is very low on power. The device will soon shutdown if not charged."
 msgstr "扫描仪电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a camera is low or very low on power
-#: plugins/power/gsd-power-manager.c:744
+#: plugins/power/gsd-power-manager.c:745
 msgid "Camera battery low"
 msgstr "相机电池电量低"
 
 #. TRANSLATORS: notification body, a camera is low on power
-#: plugins/power/gsd-power-manager.c:747
+#: plugins/power/gsd-power-manager.c:748
 #, c-format
 msgid "Camera is low on power (%.0f%%)"
 msgstr "相机电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:748
+#: plugins/power/gsd-power-manager.c:749
 msgid "Camera is low on power"
 msgstr "相机电量低"
 
 #. TRANSLATORS: notification body, a camera is very low on power
-#: plugins/power/gsd-power-manager.c:750
+#: plugins/power/gsd-power-manager.c:751
 #, c-format
 msgid ""
 "Camera is very low on power (%.0f%%). The device will soon shutdown if not "
 "charged."
 msgstr "相机电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:752
+#: plugins/power/gsd-power-manager.c:753
 msgid ""
 "Camera is very low on power. The device will soon shutdown if not charged."
 msgstr "相机电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a Bluetooth device is low or very low on power
-#: plugins/power/gsd-power-manager.c:757
+#: plugins/power/gsd-power-manager.c:758
 msgid "Bluetooth device battery low"
 msgstr "蓝牙设备电池电量低"
 
 #. TRANSLATORS: notification body, a Bluetooth device is low on power
-#: plugins/power/gsd-power-manager.c:760
+#: plugins/power/gsd-power-manager.c:761
 #, c-format
 msgid "Bluetooth device is low on power (%.0f%%)"
 msgstr "蓝牙设备电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:761
+#: plugins/power/gsd-power-manager.c:762
 msgid "Bluetooth device is low on power"
 msgstr "蓝牙设备电量低"
 
 #. TRANSLATORS: notification body, a Bluetooth device is very low on power
-#: plugins/power/gsd-power-manager.c:763
+#: plugins/power/gsd-power-manager.c:764
 #, c-format
 msgid ""
 "Bluetooth device is very low on power (%.0f%%). The device will soon "
 "shutdown if not charged."
 msgstr "蓝牙设备电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:765
+#: plugins/power/gsd-power-manager.c:766
 msgid ""
 "Bluetooth device is very low on power. The device will soon shutdown if not "
 "charged."
 msgstr "蓝牙设备电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, a connected (wireless) device or peripheral of unhandled type is low or very on power
-#: plugins/power/gsd-power-manager.c:771
+#: plugins/power/gsd-power-manager.c:772
 msgid "Connected device battery is low"
 msgstr "连接的设备电池电量低"
 
 #. TRANSLATORS: notification body, a connected (wireless) device or peripheral of unhandled type is low on power
-#: plugins/power/gsd-power-manager.c:774
+#: plugins/power/gsd-power-manager.c:775
 #, c-format
 msgid "A connected device is low on power (%.0f%%)"
 msgstr "连接的某个设备电量低（%.0f%%）"
 
-#: plugins/power/gsd-power-manager.c:775
+#: plugins/power/gsd-power-manager.c:776
 msgid "A connected device is low on power"
 msgstr "连接的设备电量低"
 
 #. TRANSLATORS: notification body, a connected (wireless) device or peripheral of unhandled type is very low on power
-#: plugins/power/gsd-power-manager.c:777
+#: plugins/power/gsd-power-manager.c:778
 #, c-format
 msgid ""
 "A connected device is very low on power (%.0f%%). The device will soon "
 "shutdown if not charged."
 msgstr "连接的某个设备电量非常低（%.0f%%）。如果不充电，此设备将很快停止工作。"
 
-#: plugins/power/gsd-power-manager.c:779
+#: plugins/power/gsd-power-manager.c:780
 msgid ""
 "A connected device is very low on power. The device will soon shutdown if "
 "not charged."
 msgstr "连接的某个设备电量非常低。如果不充电，此设备将很快停止工作。"
 
 #. TRANSLATORS: notification title, the battery of this laptop/tablet/phone is running low, shows percentage remaining
-#: plugins/power/gsd-power-manager.c:806
+#: plugins/power/gsd-power-manager.c:807
 msgid "Low Battery"
 msgstr "电池电量低"
 
 #. TRANSLATORS: notification body, the battery of this laptop/tablet/phone is running low, shows percentage remaining
-#: plugins/power/gsd-power-manager.c:809
+#: plugins/power/gsd-power-manager.c:810
 #, c-format
 msgid "%.0f%% battery remaining"
 msgstr "剩余 %.0f%%"
 
 #. TRANSLATORS: notification title, an Uninterruptible Power Supply (UPS) is running low, shows percentage remaining
-#: plugins/power/gsd-power-manager.c:812
+#: plugins/power/gsd-power-manager.c:813
 msgid "UPS Low"
 msgstr "UPS 电量低"
 
 #. TRANSLATORS: notification body, an Uninterruptible Power Supply (UPS) is running low, shows percentage remaining
 #. TRANSLATORS: notification body, an Uninterruptible Power Supply (UPS) is running low, warning about action happening soon
-#: plugins/power/gsd-power-manager.c:815 plugins/power/gsd-power-manager.c:892
+#: plugins/power/gsd-power-manager.c:816 plugins/power/gsd-power-manager.c:893
 #, c-format
 msgid "%.0f%% UPS power remaining"
 msgstr "UPS 电量剩余 %.0f%%"
 
 #. TRANSLATORS: this is the sound description
-#: plugins/power/gsd-power-manager.c:856
+#: plugins/power/gsd-power-manager.c:857
 msgid "Battery is low"
 msgstr "电池电量低"
 
 #. TRANSLATORS: notification title, the battery of this laptop/tablet/phone is critically low, advice on what the user should do
-#: plugins/power/gsd-power-manager.c:883
+#: plugins/power/gsd-power-manager.c:884
 msgid "Battery Almost Empty"
 msgstr "电池电量即将用尽"
 
 #. TRANSLATORS: notification body, the battery of this laptop/tablet/phone is critically running low, advice on what the user should do
-#: plugins/power/gsd-power-manager.c:886
+#: plugins/power/gsd-power-manager.c:887
 #, c-format
 msgid "Connect power now"
 msgstr "立即连接电源"
 
 #. TRANSLATORS: notification title, an Uninterruptible Power Supply (UPS) is running low, warning about action happening soon
-#: plugins/power/gsd-power-manager.c:889
+#: plugins/power/gsd-power-manager.c:890
 msgid "UPS Almost Empty"
 msgstr "UPS 电量即将用尽"
 
 #. TRANSLATORS: notification title, the battery of this laptop/tablet/phone is critically low, warning about action happening now
-#: plugins/power/gsd-power-manager.c:964
+#: plugins/power/gsd-power-manager.c:965
 msgid "Battery is Empty"
 msgstr "电池电量已用尽"
 
 #. TRANSLATORS: notification body, the battery of this laptop/tablet/phone is critically low, warning about action about to happen
 #. TRANSLATORS: notification body, an Uninterruptible Power Supply (UPS) is critically low, warning about action about to happen
-#: plugins/power/gsd-power-manager.c:971 plugins/power/gsd-power-manager.c:991
+#: plugins/power/gsd-power-manager.c:972 plugins/power/gsd-power-manager.c:992
 msgid "This device is about to hibernate"
 msgstr "此设备即将休眠"
 
-#: plugins/power/gsd-power-manager.c:973 plugins/power/gsd-power-manager.c:993
+#: plugins/power/gsd-power-manager.c:974 plugins/power/gsd-power-manager.c:994
 msgid "This device is about to shutdown"
 msgstr "此设备即将关机"
 
 #. TRANSLATORS: notification title, an Uninterruptible Power Supply (UPS) is critically low, warning about action about to happen
-#: plugins/power/gsd-power-manager.c:984
+#: plugins/power/gsd-power-manager.c:985
 msgid "UPS is Empty"
 msgstr "UPS 电量已用尽"
 
 #. TRANSLATORS: this is the sound description
-#: plugins/power/gsd-power-manager.c:1629
+#: plugins/power/gsd-power-manager.c:1630
 msgid "Lid has been opened"
 msgstr "盖子已打开"
 
 #. TRANSLATORS: this is the sound description
-#: plugins/power/gsd-power-manager.c:1667
+#: plugins/power/gsd-power-manager.c:1668
 msgid "Lid has been closed"
 msgstr "盖子已合上"
 
 #. TRANSLATORS: this is the sound description
-#: plugins/power/gsd-power-manager.c:2324
+#: plugins/power/gsd-power-manager.c:2335
 msgid "On battery power"
 msgstr "电池供电"
 
 #. TRANSLATORS: this is the sound description
-#: plugins/power/gsd-power-manager.c:2329
+#: plugins/power/gsd-power-manager.c:2340
 msgid "On AC power"
 msgstr "电源供电"
 
-#: plugins/power/gsd-power-manager.c:2593
+#: plugins/power/gsd-power-manager.c:2604
 msgid "Automatic Logout"
 msgstr "自动登出"
 
-#: plugins/power/gsd-power-manager.c:2593
+#: plugins/power/gsd-power-manager.c:2604
 msgid "You will soon log out because of inactivity"
 msgstr "您将因为不活动而登出"
 
-#: plugins/power/gsd-power-manager.c:2598
+#: plugins/power/gsd-power-manager.c:2609
 msgid "Automatic Suspend"
 msgstr "自动挂起"
 
-#: plugins/power/gsd-power-manager.c:2598
-#: plugins/power/gsd-power-manager.c:2603
+#: plugins/power/gsd-power-manager.c:2609
+#: plugins/power/gsd-power-manager.c:2614
 msgid "Suspending soon because of inactivity"
 msgstr "因为不活动而即将挂起"
 
-#: plugins/power/gsd-power-manager.c:2603
+#: plugins/power/gsd-power-manager.c:2614
 msgid "Automatic Hibernation"
 msgstr "自动休眠"
 
@@ -2605,15 +2605,15 @@ msgstr "打印机“%s”：“%s”。"
 msgid "User was not logged in with smartcard."
 msgstr "用户未使用智能卡登录。"
 
-#: plugins/usb-protection/gsd-usb-protection-manager.c:407
+#: plugins/usb-protection/gsd-usb-protection-manager.c:355
 msgid "USB Protection"
 msgstr "USB 保护"
 
-#: plugins/usb-protection/gsd-usb-protection-manager.c:537
+#: plugins/usb-protection/gsd-usb-protection-manager.c:482
 msgid "New USB device"
 msgstr "新 USB 设备"
 
-#: plugins/usb-protection/gsd-usb-protection-manager.c:538
+#: plugins/usb-protection/gsd-usb-protection-manager.c:483
 msgid ""
 "New USB device has been activated while the session was not locked. If you "
 "did not intend to insert any device, check your system for any suspicious "
@@ -2622,11 +2622,13 @@ msgstr ""
 "会话未锁定时激活了新的 USB 设备。如果您未有意插入任何设备，请检查系统是否有任"
 "何可疑设备并移除它们。"
 
-#: plugins/usb-protection/gsd-usb-protection-manager.c:680
+#: plugins/usb-protection/gsd-usb-protection-manager.c:507
+#: plugins/usb-protection/gsd-usb-protection-manager.c:551
 msgid "New device detected"
 msgstr "检测到新设备"
 
-#: plugins/usb-protection/gsd-usb-protection-manager.c:681
+#: plugins/usb-protection/gsd-usb-protection-manager.c:508
+#: plugins/usb-protection/gsd-usb-protection-manager.c:552
 msgid ""
 "Either one of your existing devices has been reconnected or a new one has "
 "been inserted. If you did not do it, check your system for any suspicious "
@@ -2635,28 +2637,22 @@ msgstr ""
 "您的一个已有设备已重新连接或插入了新的设备。如果您未这样做，请检查系统中是否"
 "有任何可疑设备。"
 
-#: plugins/usb-protection/gsd-usb-protection-manager.c:688
+#: plugins/usb-protection/gsd-usb-protection-manager.c:518
 msgid "Reconnect USB device"
 msgstr "重新插入USB设备"
 
-#: plugins/usb-protection/gsd-usb-protection-manager.c:689
+#: plugins/usb-protection/gsd-usb-protection-manager.c:519
 msgid ""
 "New device has been detected while you were away. Please disconnect and "
 "reconnect the device to start using it."
 msgstr "在锁定后检测到新设备。请重新插入以使用。"
 
-#: plugins/usb-protection/gsd-usb-protection-manager.c:695
-#: plugins/usb-protection/gsd-usb-protection-manager.c:722
+#: plugins/usb-protection/gsd-usb-protection-manager.c:562
+#: plugins/usb-protection/gsd-usb-protection-manager.c:572
 msgid "USB device blocked"
 msgstr "USB设备已禁用"
 
-#: plugins/usb-protection/gsd-usb-protection-manager.c:696
-msgid ""
-"New device has been detected while you were away. It has been blocked "
-"because the USB protection is active."
-msgstr "在锁定后检测到新设备。新设备已因USB保护而禁用。"
-
-#: plugins/usb-protection/gsd-usb-protection-manager.c:723
+#: plugins/usb-protection/gsd-usb-protection-manager.c:563
 msgid ""
 "The new inserted device has been blocked because the USB protection is "
 "active. If you want to activate the device, disable the USB protection and "
@@ -2664,6 +2660,12 @@ msgid ""
 msgstr ""
 "新插入的设备已因为激活的 USB 保护而被封锁。如果您想要激活该设备，请禁用 USB "
 "保护并重新插入该设备。"
+
+#: plugins/usb-protection/gsd-usb-protection-manager.c:573
+msgid ""
+"New device has been detected while you were away. It has been blocked "
+"because the USB protection is active."
+msgstr "在锁定后检测到新设备。新设备已因USB保护而禁用。"
 
 #: plugins/wwan/cc-wwan-errors-private.h:40
 msgid "Phone failure"
