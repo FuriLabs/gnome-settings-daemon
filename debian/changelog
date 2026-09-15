@@ -1,3 +1,28 @@
+gnome-settings-daemon (51.0-1ubuntu1) stonking; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Add Build-Depends: accountsservice
+      - Add versioned test dependency on gnome-session
+    + debian/patches:
+      - tests-Answer-GetSessionByPID-in-mock-logind.patch
+    + debian/patches/ubuntu:
+      - keyboard-sync-input-sources-to-accountsservice.patch
+      - keyboard-Use-ibus-sources-from-locale.patch
+      - lid-close-suspend-support.patch
+      - media-keys-restore-terminal-keyboard-shortcut-schema.patch
+      - print-notifications-suppress-printer-may-not-be-connected.patch
+      - teach-gsd-about-the-gnome-calculator-snap-.desktop-name.patch
+    + debian/gnome-settings-daemon.install:
+      - Install apport hook
+    + debian/watch:
+      - Look for alpha releases
+  * d/p: Rebase patches
+  * d/p: Drop GetSessionByPID mock in tests, not used anymore
+  * d/control: Bump minimum gnome-session-bin dependency for tests
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 15 Sep 2026 16:17:46 +0200
+
 gnome-settings-daemon (51.0-1) unstable; urgency=medium
 
   * New upstream release
