@@ -1,3 +1,18 @@
+gnome-settings-daemon (51.0-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 13 Sep 2026 23:39:23 +0200
+
+gnome-settings-daemon (51~rc-1) unstable; urgency=medium
+
+  * New upstream release
+  * Opt into Salsa CI
+  * Remove 3 test patches applied in new release
+  * Use DH_COMPAT=13 for dh_installsystemduser to avoid warnings
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 01 Sep 2026 06:30:22 +0200
+
 gnome-settings-daemon (51~beta-2ubuntu2) stonking; urgency=medium
 
   * d/p: Mock GetSessionByPID to please gnome-session

@@ -70,7 +70,6 @@ gsdpowerconstants_py = custom_target(
   output,
   input: 'gsd-power-constants.h',
   output: output,
-  build_by_default: true,
   command: [join_paths(meson.current_source_dir(), 'gsd-power-constants-update.pl'), '@INPUT@', '@OUTPUT@']
 )
 
@@ -80,7 +79,6 @@ gsdpowerenums_py = custom_target(
   output,
   output: output,
   capture: true,
-  build_by_default: true,
   command: [gsd_power_enums_update]
 )
 
@@ -91,6 +89,7 @@ envs = environment()
 #envs.prepend('G_DEBUG', 'fatal-warnings')
 envs.set('BUILDDIR', meson.current_build_dir())
 envs.set('TOP_BUILDDIR', meson.project_build_root())
+envs.set('GSD_TEST_PREFIX', gsd_prefix)
 envs.set('NO_AT_BRIDGE', '1')
 
 tests = [
@@ -117,6 +116,12 @@ foreach test : tests
     'test-power @0@'.format(test),
     test_py,
     args: [ 'PowerPluginTest@0@'.format(test) ],
+    depends: [
+      gsd_power,
+      gsdpowerconstants_py,
+      gsdpowerenums_py,
+      compiled_schemas,
+    ],
     env: envs,
     timeout: timeout_by_test.get(test, 120)
   )
