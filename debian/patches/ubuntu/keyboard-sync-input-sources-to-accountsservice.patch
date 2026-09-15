@@ -9,7 +9,7 @@ Subject: keyboard: sync input sources to accountsservice
  3 files changed, 88 insertions(+)
 
 diff --git a/meson.build b/meson.build
-index 56b34e9..7415387 100644
+index c6e84e7..bed0559 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -92,6 +92,7 @@ endif
@@ -173,7 +173,7 @@ index 2a90e09..c9b59a0 100644
  
          g_clear_handle_id (&manager->start_idle_id, g_source_remove);
 diff --git a/plugins/xsettings/meson.build b/plugins/xsettings/meson.build
-index 26d9bcc..7430ffe 100644
+index 5e5443b..00e4cbd 100644
 --- a/plugins/xsettings/meson.build
 +++ b/plugins/xsettings/meson.build
 @@ -14,6 +14,7 @@ sources = gsd_xsettings_gtk + fc_monitor + wm_button_layout_translation + files(

@@ -16,12 +16,12 @@ so the session is considered active regardless of the host environment.
  1 file changed, 13 insertions(+)
 
 diff --git a/tests/gsdtestcase.py b/tests/gsdtestcase.py
-index 2ab6396..1e9fa22 100644
+index 4849b05..4d48750 100644
 --- a/tests/gsdtestcase.py
 +++ b/tests/gsdtestcase.py
-@@ -310,6 +310,19 @@ class GSDTestCase(DBusTestCase):
-             % (os.getuid(), os.environ.get('USER', 'user'))
-         )
+@@ -330,6 +330,19 @@ class GSDTestCase(DBusTestCase):
+             [],
+             dbus_interface=dbusmock.MOCK_IFACE)
  
 +        # In environments without a real logind session (e.g. build sandboxes),
 +        # gnome-session cannot find a session via libsystemd and falls back to
