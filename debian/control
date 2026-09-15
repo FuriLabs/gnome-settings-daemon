@@ -12,7 +12,7 @@ Build-Depends:
  debhelper-compat (= 14),
  dh-exec,
  dh-sequence-gnome,
- gnome-session-bin (>= 51~beta-0ubuntu2) <!nocheck>,
+ gnome-session-bin (>= 51.0) <!nocheck>,
  gsettings-desktop-schemas-dev (>= 46~beta),
  intltool,
  libaccountsservice-dev (>= 0.6.34),
