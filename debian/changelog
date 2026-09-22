@@ -1,3 +1,9 @@
+gnome-settings-daemon (51.0-2) unstable; urgency=medium
+
+  * Stop overriding dh_installsystemduser
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 22 Sep 2026 12:44:01 +0200
+
 gnome-settings-daemon (51.0-1) unstable; urgency=medium
 
   * New upstream release
